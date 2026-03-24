@@ -210,7 +210,14 @@ const DAYS = ['Mon','Tue','Wed','Thu','Fri'];
 const JP=25, JB=25, GO=20;
 let sheetData = {};
 
-// Build a YYYY-MM-DD key using LOCAL date (not UTC) to avoid timezone shift
+// Arizona is UTC-7 (MST, no daylight saving)
+function getAZDate(){
+  const now = new Date();
+  const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+  return new Date(utc + (-7 * 3600000));
+}
+
+// Build a YYYY-MM-DD key using local date
 function getKey(d){
   const y = d.getFullYear();
   const m = String(d.getMonth()+1).padStart(2,'0');
@@ -237,7 +244,7 @@ function parseSheetDate(raw){
 }
 
 function getWeekDates(){
-  const today = new Date();
+  const today = getAZDate();
   const dow = today.getDay();
   const monday = new Date(today);
   monday.setDate(today.getDate() - (dow===0?6:dow-1));
@@ -275,7 +282,7 @@ async function loadData(){
       sheetData[key].buyers += (row.c[2]&&row.c[2].v) ? Number(row.c[2].v) : 0;
       sheetData[key].offers += (row.c[3]&&row.c[3].v) ? Number(row.c[3].v) : 0;
     });
-    document.getElementById('last-updated').textContent = 'Last updated: '+new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+    document.getElementById('last-updated').textContent = 'Last updated: '+getAZDate().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
     renderAll();
     document.getElementById('loading').style.display='none';
     document.getElementById('content').style.display='block';
@@ -295,7 +302,7 @@ function setCard(valId,barId,badgeId,val,pctVal,status,target){
 }
 
 function renderYesterday(){
-  const y = new Date();
+  const y = getAZDate();
   y.setDate(y.getDate()-1);
   if(y.getDay()===0) y.setDate(y.getDate()-2);
   if(y.getDay()===6) y.setDate(y.getDate()-1);
@@ -314,7 +321,7 @@ function renderYesterday(){
 }
 
 function renderToday(){
-  const e = sheetData[getKey(new Date())]||{};
+  const e = sheetData[getKey(getAZDate())]||{};
   const p=e.props||0, b=e.buyers||0, o=e.offers||0;
   if(!p&&!b&&!o) return;
   setCard('d-props','bar-props','badge-props',p,pct(p,JP),statusP(p),JP);
@@ -385,7 +392,7 @@ function renderWeekly(){
 }
 
 function renderMonthly(){
-  const now=new Date();
+  const now=getAZDate();
   const monthKey=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
   let tp=0,tb=0,to=0,days=0;
   Object.keys(sheetData).forEach(k=>{
@@ -429,9 +436,9 @@ function switchTab(tab){
 }
 
 const now = new Date();
-document.getElementById('today-label').textContent = now.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'});
+document.getElementById('today-label').textContent = getAZDate().toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'});
 loadData();
 setInterval(loadData, 5*60*1000);
 </script>
 </body>
-</html> 
+</html>
