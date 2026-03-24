@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nanu Investments — VA KPI Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --green: #1a9e6e;
+  --green-bg: #e8f7f1;
+  --green-text: #0d5c3f;
+  --yellow: #d4900a;
+  --yellow-bg: #fef3d7;
+  --yellow-text: #7a5100;
+  --red: #d94040;
+  --red-bg: #fdeaea;
+  --red-text: #7a1f1f;
+  --border: #e8e8e8;
+  --bg: #f5f4f0;
+  --card: #ffffff;
+  --text: #1a1a1a;
+  --text-muted: #6b6b6b;
+  --mono: 'DM Mono', monospace;
+  --sans: 'DM Sans', sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; }
+.topbar { background: var(--card); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 100; flex-wrap: wrap; gap: 8px; }
+.logo { font-family: var(--mono); font-size: 13px; font-weight: 500; letter-spacing: 0.05em; }
+.logo span { color: var(--green); }
+.topbar-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.huddle-pill { display: flex; align-items: center; gap: 6px; background: var(--green-bg); color: var(--green-text); font-size: 12px; font-weight: 500; padding: 5px 10px; border-radius: 20px; }
+.huddle-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+.date-label { font-family: var(--mono); font-size: 11px; color: var(--text-muted); }
+.refresh-btn { font-family: var(--mono); font-size: 11px; color: var(--text-muted); background: none; border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; cursor: pointer; }
+.refresh-btn:hover { background: var(--bg); }
+.tabs-bar { background: var(--card); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; }
+.tab { padding: 12px 20px; font-size: 13px; font-weight: 500; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; border-top: none; border-left: none; border-right: none; background: none; transition: all 0.15s; }
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--text); border-bottom: 2px solid var(--text); }
+.main { padding: 2rem; max-width: 1100px; margin: 0 auto; }
+.yesterday-bar { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 20px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+.yesterday-label { font-family: var(--mono); font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; }
+.yscores { display: flex; gap: 16px; flex-wrap: wrap; }
+.yscore { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.yscore-dot { width: 8px; height: 8px; border-radius: 50%; }
+.yscore-dot.green { background: var(--green); }
+.yscore-dot.yellow { background: var(--yellow); }
+.yscore-dot.red { background: var(--red); }
+.yscore-dot.empty { background: var(--border); }
+.va-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+@media(max-width:700px){.va-grid{grid-template-columns:1fr}}
+.va-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; }
+.va-head { display: flex; align-items: center; gap: 12px; margin-bottom: 1.25rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--border); }
+.avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 13px; font-weight: 500; flex-shrink: 0; }
+.avatar.j { background: #e8f0fe; color: #1a4fa0; }
+.avatar.g { background: var(--green-bg); color: var(--green-text); }
+.va-name { font-size: 15px; font-weight: 600; }
+.va-role { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+.kpi-list { display: flex; flex-direction: column; gap: 14px; }
+.kpi-top { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 6px; }
+.kpi-name { font-size: 12px; color: var(--text-muted); }
+.kpi-nums { display: flex; align-items: baseline; gap: 6px; }
+.kpi-val { font-family: var(--mono); font-size: 22px; font-weight: 500; }
+.kpi-target { font-family: var(--mono); font-size: 11px; color: var(--text-muted); }
+.bar-track { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; margin-bottom: 5px; }
+.bar-fill { height: 100%; border-radius: 3px; transition: width 0.6s cubic-bezier(.4,0,.2,1); width: 0%; }
+.bar-fill.green { background: var(--green); }
+.bar-fill.yellow { background: var(--yellow); }
+.bar-fill.red { background: var(--red); }
+.kpi-badge { display: inline-block; font-size: 10px; font-weight: 500; font-family: var(--mono); padding: 2px 7px; border-radius: 4px; }
+.kpi-badge.green { background: var(--green-bg); color: var(--green-text); }
+.kpi-badge.yellow { background: var(--yellow-bg); color: var(--yellow-text); }
+.kpi-badge.red { background: var(--red-bg); color: var(--red-text); }
+.kpi-badge.empty { background: var(--bg); color: var(--text-muted); border: 1px solid var(--border); }
+.streak-section { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+.streak-title { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 1.25rem; }
+.streak-rows { display: flex; flex-direction: column; gap: 14px; }
+.streak-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.streak-name { font-size: 12px; color: var(--text-muted); width: 130px; flex-shrink: 0; }
+.streak-days { display: flex; gap: 5px; }
+.sday { width: 32px; height: 32px; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 9px; font-family: var(--mono); gap: 2px; }
+.sday.hit { background: var(--green-bg); color: var(--green-text); }
+.sday.miss { background: var(--red-bg); color: var(--red-text); }
+.sday.future { background: var(--bg); color: var(--text-muted); border: 1px solid var(--border); }
+.sday-check { font-size: 11px; }
+.sday-label { font-size: 8px; }
+.streak-count { font-family: var(--mono); font-size: 11px; color: var(--text-muted); }
+.weekly-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+.weekly-title { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 1.25rem; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 500; color: var(--text-muted); border-bottom: 1px solid var(--border); font-family: var(--mono); }
+td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 13px; }
+tr:last-child td { border-bottom: none; }
+.weekly-totals { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-top: 1.5rem; }
+.total-card { background: var(--bg); border-radius: 8px; padding: 12px; }
+.total-label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+.total-val { font-family: var(--mono); font-size: 20px; font-weight: 500; }
+.total-target { font-family: var(--mono); font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+.monthly-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(200px,1fr)); gap: 12px; }
+.monthly-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; }
+.monthly-label { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; }
+.monthly-val { font-family: var(--mono); font-size: 28px; font-weight: 500; margin-bottom: 4px; }
+.monthly-target { font-size: 11px; color: var(--text-muted); margin-bottom: 10px; }
+.loading { display: flex; align-items: center; justify-content: center; height: 200px; font-family: var(--mono); font-size: 13px; color: var(--text-muted); flex-direction: column; gap: 8px; }
+.last-updated { font-family: var(--mono); font-size: 10px; color: var(--text-muted); text-align: right; margin-bottom: 1rem; }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="logo">NANU<span>.</span>KPI</div>
+  <div class="topbar-right">
+    <div class="huddle-pill"><div class="huddle-dot"></div>Morning huddle · 9:15 AM</div>
+    <div class="date-label" id="today-label"></div>
+    <button class="refresh-btn" onclick="loadData()">↻ refresh</button>
+  </div>
+</div>
+<div class="tabs-bar">
+  <button class="tab active" onclick="switchTab('daily')">Daily</button>
+  <button class="tab" onclick="switchTab('weekly')">Weekly</button>
+  <button class="tab" onclick="switchTab('monthly')">Monthly</button>
+</div>
+<div class="main">
+  <div id="loading" class="loading"><div>Loading data from Google Sheets...</div></div>
+  <div id="content" style="display:none">
+    <div class="last-updated" id="last-updated"></div>
+    <div id="view-daily">
+      <div class="yesterday-bar">
+        <div class="yesterday-label">Yesterday</div>
+        <div class="yscores" id="yesterday-scores"></div>
+      </div>
+      <div class="va-grid">
+        <div class="va-card">
+          <div class="va-head">
+            <div class="avatar j">JO</div>
+            <div><div class="va-name">Joely</div><div class="va-role">Property sourcing · Buyer list</div></div>
+          </div>
+          <div class="kpi-list">
+            <div class="kpi-item">
+              <div class="kpi-top">
+                <div class="kpi-name">Properties found today</div>
+                <div class="kpi-nums"><div class="kpi-val" id="d-props">—</div><div class="kpi-target">/ 25</div></div>
+              </div>
+              <div class="bar-track"><div class="bar-fill" id="bar-props"></div></div>
+              <span class="kpi-badge empty" id="badge-props">not logged</span>
+            </div>
+            <div class="kpi-item">
+              <div class="kpi-top">
+                <div class="kpi-name">Buyers added today</div>
+                <div class="kpi-nums"><div class="kpi-val" id="d-buyers">—</div><div class="kpi-target">/ 25</div></div>
+              </div>
+              <div class="bar-track"><div class="bar-fill" id="bar-buyers"></div></div>
+              <span class="kpi-badge empty" id="badge-buyers">not logged</span>
+            </div>
+          </div>
+        </div>
+        <div class="va-card">
+          <div class="va-head">
+            <div class="avatar g">GR</div>
+            <div><div class="va-name">Grace</div><div class="va-role">Comps · Offers</div></div>
+          </div>
+          <div class="kpi-list">
+            <div class="kpi-item">
+              <div class="kpi-top">
+                <div class="kpi-name">Offers sent today</div>
+                <div class="kpi-nums"><div class="kpi-val" id="d-offers">—</div><div class="kpi-target">/ 20</div></div>
+              </div>
+              <div class="bar-track"><div class="bar-fill" id="bar-offers"></div></div>
+              <span class="kpi-badge empty" id="badge-offers">not logged</span>
+            </div>
+            <div class="kpi-item">
+              <div class="kpi-top">
+                <div class="kpi-name">Comp rate (offers / properties)</div>
+                <div class="kpi-nums"><div class="kpi-val" id="d-rate">—</div><div class="kpi-target">/ 100%</div></div>
+              </div>
+              <div class="bar-track"><div class="bar-fill" id="bar-rate"></div></div>
+              <span class="kpi-badge empty" id="badge-rate">not logged</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="streak-section">
+        <div class="streak-title">This week — consistency streaks (Mon–Fri)</div>
+        <div class="streak-rows">
+          <div class="streak-row"><div class="streak-name">Joely · properties</div><div class="streak-days" id="streak-j-props"></div><div class="streak-count" id="sc-j-props"></div></div>
+          <div class="streak-row"><div class="streak-name">Joely · buyers</div><div class="streak-days" id="streak-j-buyers"></div><div class="streak-count" id="sc-j-buyers"></div></div>
+          <div class="streak-row"><div class="streak-name">Grace · offers</div><div class="streak-days" id="streak-grace"></div><div class="streak-count" id="sc-grace"></div></div>
+        </div>
+      </div>
+    </div>
+    <div id="view-weekly" style="display:none">
+      <div class="weekly-card">
+        <div class="weekly-title">This week</div>
+        <table><thead><tr><th>Day</th><th>Properties</th><th>Buyers</th><th>Offers</th><th>Joely</th><th>Grace</th></tr></thead><tbody id="weekly-body"></tbody></table>
+        <div class="weekly-totals" id="weekly-totals"></div>
+      </div>
+    </div>
+    <div id="view-monthly" style="display:none">
+      <div class="monthly-grid" id="monthly-grid"></div>
+    </div>
+  </div>
+</div>
+<script>
+const SHEET_ID = '1c154od2ZQEgRYyzbQtMRe9j1XcD1Bpub3Ff_sj2nh-k';
+const SHEET_NAME = 'KPI Sheet';
+const API_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}`;
+const DAYS = ['Mon','Tue','Wed','Thu','Fri'];
+const JP=25, JB=25, GO=20;
+let sheetData = {};
+
+// Arizona is UTC-7 (MST, no daylight saving)
+function getAZDate(){
+  const now = new Date();
+  const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+  return new Date(utc + (-7 * 3600000));
+}
+
+// Build a YYYY-MM-DD key using local date
+function getKey(d){
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+
+// Parse any date format coming from the sheet
+function parseSheetDate(raw){
+  if(!raw) return null;
+  // Google Visualization Date object format: Date(2026,2,23) — month is 0-indexed
+  const dtMatch = String(raw).match(/Date\((\d+),(\d+),(\d+)\)/);
+  if(dtMatch){
+    return new Date(parseInt(dtMatch[1]), parseInt(dtMatch[2]), parseInt(dtMatch[3]));
+  }
+  // String format: M/D/YYYY or MM/DD/YYYY
+  if(typeof raw === 'string' && raw.includes('/')){
+    const parts = raw.split('/');
+    if(parts.length === 3){
+      return new Date(parseInt(parts[2]), parseInt(parts[0])-1, parseInt(parts[1]));
+    }
+  }
+  return null;
+}
+
+function getWeekDates(){
+  const today = getAZDate();
+  const dow = today.getDay();
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - (dow===0?6:dow-1));
+  const dates = [];
+  for(let i=0;i<5;i++){
+    const d = new Date(monday);
+    d.setDate(monday.getDate()+i);
+    dates.push(d);
+  }
+  return dates;
+}
+
+function statusP(v){ return v>=JP?'green':v>=13?'yellow':'red'; }
+function statusB(v){ return v>=JB?'green':v>=13?'yellow':'red'; }
+function statusO(v){ return v>=GO?'green':v>=10?'yellow':'red'; }
+function pct(v,t){ return Math.min(100,Math.round(v/t*100)); }
+function fmtDate(d){ return d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}); }
+
+async function loadData(){
+  document.getElementById('loading').style.display='flex';
+  document.getElementById('content').style.display='none';
+  try{
+    const res = await fetch(API_URL+'&cachebust='+Date.now());
+    const text = await res.text();
+    const json = JSON.parse(text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*?)\);/)[1]);
+    const rows = json.table.rows;
+    sheetData = {};
+    rows.forEach(row => {
+      if(!row.c||!row.c[0]||!row.c[0].v) return;
+      const d = parseSheetDate(row.c[0].v);
+      if(!d) return;
+      const key = getKey(d);
+      if(!sheetData[key]) sheetData[key]={props:0,buyers:0,offers:0};
+      sheetData[key].props  += (row.c[1]&&row.c[1].v) ? Number(row.c[1].v) : 0;
+      sheetData[key].buyers += (row.c[2]&&row.c[2].v) ? Number(row.c[2].v) : 0;
+      sheetData[key].offers += (row.c[3]&&row.c[3].v) ? Number(row.c[3].v) : 0;
+    });
+    // DEBUG - remove after testing
+    const debugKeys = Object.keys(sheetData).join(', ');
+    const todayKey = getKey(getAZDate());
+    console.log('Sheet keys found:', debugKeys);
+    console.log('Today key (AZ):', todayKey);
+    console.log('Today data:', JSON.stringify(sheetData[todayKey]));
+    document.getElementById('last-updated').textContent = 'Last updated: '+getAZDate().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+    renderAll();
+    document.getElementById('loading').style.display='none';
+    document.getElementById('content').style.display='block';
+  } catch(e){
+    document.getElementById('loading').innerHTML = '<div>Error loading data.</div><div style="font-size:11px;margin-top:4px">Make sure your sheet is set to "Anyone with the link can view"</div>';
+  }
+}
+
+function setCard(valId,barId,badgeId,val,pctVal,status,target){
+  document.getElementById(valId).textContent = val;
+  const bar = document.getElementById(barId);
+  bar.style.width = pctVal+'%';
+  bar.className = 'bar-fill '+status;
+  const badge = document.getElementById(badgeId);
+  badge.className = 'kpi-badge '+status;
+  badge.textContent = pctVal+'% of target ('+val+'/'+target+')';
+}
+
+function renderYesterday(){
+  const y = getAZDate();
+  y.setDate(y.getDate()-1);
+  if(y.getDay()===0) y.setDate(y.getDate()-2);
+  if(y.getDay()===6) y.setDate(y.getDate()-1);
+  const e = sheetData[getKey(y)]||{};
+  const p=e.props||0, b=e.buyers||0, o=e.offers||0;
+  const el = document.getElementById('yesterday-scores');
+  if(!p&&!b&&!o){
+    el.innerHTML='<span style="font-size:13px;color:var(--text-muted)">No data for '+fmtDate(y)+'</span>';
+    return;
+  }
+  el.innerHTML=[
+    {label:'Properties',val:p,s:statusP(p)},
+    {label:'Buyers',val:b,s:statusB(b)},
+    {label:'Offers',val:o,s:statusO(o)},
+  ].map(i=>`<div class="yscore"><div class="yscore-dot ${i.s}"></div><span>${i.label}: <strong>${i.val}</strong></span></div>`).join('');
+}
+
+function renderToday(){
+  const e = sheetData[getKey(getAZDate())]||{};
+  const p=e.props||0, b=e.buyers||0, o=e.offers||0;
+  if(!p&&!b&&!o) return;
+  setCard('d-props','bar-props','badge-props',p,pct(p,JP),statusP(p),JP);
+  setCard('d-buyers','bar-buyers','badge-buyers',b,pct(b,JB),statusB(b),JB);
+  setCard('d-offers','bar-offers','badge-offers',o,pct(o,GO),statusO(o),GO);
+  if(p>0){
+    const rate=Math.round(o/p*100);
+    const rs=rate>=100?'green':rate>=70?'yellow':'red';
+    setCard('d-rate','bar-rate','badge-rate',rate+'%',Math.min(100,rate),rs,'100%');
+  }
+}
+
+function buildStreak(daysElId,countId,fn){
+  const dates=getWeekDates();
+  const today=new Date();
+  const el=document.getElementById(daysElId);
+  el.innerHTML='';
+  let hits=0,elapsed=0;
+  dates.forEach((d,i)=>{
+    const isFuture=d>today;
+    const div=document.createElement('div');
+    div.className='sday';
+    const e=sheetData[getKey(d)];
+    if(isFuture){
+      div.className+=' future';
+      div.innerHTML=`<span class="sday-label">${DAYS[i]}</span>`;
+    } else {
+      elapsed++;
+      const hit=e&&fn(e);
+      if(hit){hits++;div.className+=' hit';div.innerHTML=`<span class="sday-check">✓</span><span class="sday-label">${DAYS[i]}</span>`;}
+      else{div.className+=' miss';div.innerHTML=`<span class="sday-label">${DAYS[i]}</span>`;}
+    }
+    el.appendChild(div);
+  });
+  document.getElementById(countId).textContent=hits+'/'+elapsed+' days';
+}
+
+function renderStreaks(){
+  buildStreak('streak-j-props','sc-j-props',e=>(e.props||0)>=JP);
+  buildStreak('streak-j-buyers','sc-j-buyers',e=>(e.buyers||0)>=JB);
+  buildStreak('streak-grace','sc-grace',e=>(e.offers||0)>=GO);
+}
+
+function renderWeekly(){
+  const dates=getWeekDates();
+  const today=new Date();
+  const tbody=document.getElementById('weekly-body');
+  tbody.innerHTML='';
+  let tp=0,tb=0,to=0,wd=0;
+  dates.forEach((d,i)=>{
+    const isFuture=d>today;
+    const e=sheetData[getKey(d)]||{};
+    const p=e.props||0,b=e.buyers||0,o=e.offers||0;
+    if(!isFuture){tp+=p;tb+=b;to+=o;wd++;}
+    const js=(!isFuture&&(p||b))?statusP(p):'empty';
+    const gs=(!isFuture&&o)?statusO(o):'empty';
+    const dot=(s)=>`<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${s==='green'?'var(--green)':s==='yellow'?'var(--yellow)':s==='red'?'var(--red)':'var(--border)'}"></span>`;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${DAYS[i]}</td><td>${isFuture?'—':p}</td><td>${isFuture?'—':b}</td><td>${isFuture?'—':o}</td><td>${dot(js)}</td><td>${dot(gs)}</td>`;
+    tbody.appendChild(tr);
+  });
+  const wtP=JP*wd,wtB=JB*wd,wtO=GO*wd;
+  document.getElementById('weekly-totals').innerHTML=`
+    <div class="total-card"><div class="total-label">Properties</div><div class="total-val" style="color:${statusP(wd?Math.round(tp/wd):0)==='green'?'var(--green)':statusP(wd?Math.round(tp/wd):0)==='yellow'?'var(--yellow)':'var(--red)'}">${tp}</div><div class="total-target">target ${wtP}</div></div>
+    <div class="total-card"><div class="total-label">Buyers</div><div class="total-val" style="color:${statusB(wd?Math.round(tb/wd):0)==='green'?'var(--green)':statusB(wd?Math.round(tb/wd):0)==='yellow'?'var(--yellow)':'var(--red)'}">${tb}</div><div class="total-target">target ${wtB}</div></div>
+    <div class="total-card"><div class="total-label">Offers</div><div class="total-val" style="color:${statusO(wd?Math.round(to/wd):0)==='green'?'var(--green)':statusO(wd?Math.round(to/wd):0)==='yellow'?'var(--yellow)':'var(--red)'}">${to}</div><div class="total-target">target ${wtO}</div></div>
+  `;
+}
+
+function renderMonthly(){
+  const now=getAZDate();
+  const monthKey=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  let tp=0,tb=0,to=0,days=0;
+  Object.keys(sheetData).forEach(k=>{
+    if(k.startsWith(monthKey)){
+      tp+=sheetData[k].props||0;
+      tb+=sheetData[k].buyers||0;
+      to+=sheetData[k].offers||0;
+      days++;
+    }
+  });
+  let wd=0;
+  const d=new Date(now.getFullYear(),now.getMonth(),1);
+  while(d<=now){if(d.getDay()!==0&&d.getDay()!==6)wd++;d.setDate(d.getDate()+1);}
+  const mtP=JP*wd,mtB=JB*wd,mtO=GO*wd;
+  const avgP=Math.round(tp/Math.max(days,1));
+  const avgB=Math.round(tb/Math.max(days,1));
+  const avgO=Math.round(to/Math.max(days,1));
+  document.getElementById('monthly-grid').innerHTML=`
+    <div class="monthly-card"><div class="monthly-label">Properties this month</div><div class="monthly-val" style="color:${statusP(avgP)==='green'?'var(--green)':statusP(avgP)==='yellow'?'var(--yellow)':'var(--red)'}">${tp}</div><div class="monthly-target">target ${mtP} · avg ${avgP}/day</div><div class="bar-track"><div class="bar-fill ${statusP(avgP)}" style="width:${Math.min(100,Math.round(tp/Math.max(mtP,1)*100))}%"></div></div><span class="kpi-badge ${statusP(avgP)}" style="margin-top:6px;display:inline-block">${Math.min(100,Math.round(tp/Math.max(mtP,1)*100))}% of target</span></div>
+    <div class="monthly-card"><div class="monthly-label">Buyers this month</div><div class="monthly-val" style="color:${statusB(avgB)==='green'?'var(--green)':statusB(avgB)==='yellow'?'var(--yellow)':'var(--red)'}">${tb}</div><div class="monthly-target">target ${mtB} · avg ${avgB}/day</div><div class="bar-track"><div class="bar-fill ${statusB(avgB)}" style="width:${Math.min(100,Math.round(tb/Math.max(mtB,1)*100))}%"></div></div><span class="kpi-badge ${statusB(avgB)}" style="margin-top:6px;display:inline-block">${Math.min(100,Math.round(tb/Math.max(mtB,1)*100))}% of target</span></div>
+    <div class="monthly-card"><div class="monthly-label">Offers this month</div><div class="monthly-val" style="color:${statusO(avgO)==='green'?'var(--green)':statusO(avgO)==='yellow'?'var(--yellow)':'var(--red)'}">${to}</div><div class="monthly-target">target ${mtO} · avg ${avgO}/day</div><div class="bar-track"><div class="bar-fill ${statusO(avgO)}" style="width:${Math.min(100,Math.round(to/Math.max(mtO,1)*100))}%"></div></div><span class="kpi-badge ${statusO(avgO)}" style="margin-top:6px;display:inline-block">${Math.min(100,Math.round(to/Math.max(mtO,1)*100))}% of target</span></div>
+    <div class="monthly-card"><div class="monthly-label">Days logged</div><div class="monthly-val">${days}</div><div class="monthly-target">of ${wd} workdays this month</div></div>
+  `;
+}
+
+function renderAll(){
+  renderYesterday();
+  renderToday();
+  renderStreaks();
+  renderWeekly();
+  renderMonthly();
+}
+
+function switchTab(tab){
+  ['daily','weekly','monthly'].forEach(t=>{
+    document.getElementById('view-'+t).style.display=t===tab?'':'none';
+  });
+  document.querySelectorAll('.tab').forEach((el,i)=>{
+    el.classList.toggle('active',['daily','weekly','monthly'][i]===tab);
+  });
+}
+
+const now = new Date();
+document.getElementById('today-label').textContent = getAZDate().toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'});
+loadData();
+setInterval(loadData, 5*60*1000);
+</script>
+</body>
+</html>
