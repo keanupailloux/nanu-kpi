@@ -3,448 +3,860 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nanu Investments — VA KPI Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<title>NANU REI — Command Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-:root {
-  --green: #1a9e6e;
-  --green-bg: #e8f7f1;
-  --green-text: #0d5c3f;
-  --yellow: #d4900a;
-  --yellow-bg: #fef3d7;
-  --yellow-text: #7a5100;
-  --red: #d94040;
-  --red-bg: #fdeaea;
-  --red-text: #7a1f1f;
-  --border: #e8e8e8;
-  --bg: #f5f4f0;
-  --card: #ffffff;
-  --text: #1a1a1a;
-  --text-muted: #6b6b6b;
-  --mono: 'DM Mono', monospace;
-  --sans: 'DM Sans', sans-serif;
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f7f7f5;--white:#fff;--border:#e8e8e4;--border2:#d0d0c8;
+  --text:#181816;--text2:#68685f;--text3:#b0b0a6;
+  --red:#c93f3f;--red-bg:#fdf2f2;--red-bd:#f5c4c4;
+  --amber:#b86e18;--amber-bg:#fdf6ee;--amber-bd:#f0d0a0;
+  --blue:#2860c4;--blue-bg:#f0f4fd;--blue-bd:#b8ccf4;
+  --green:#28845a;--green-bg:#f0faf4;--green-bd:#a8dfc0;
+  --teal:#0e7a8a;--teal-bg:#f0f9fa;--teal-bd:#a0dce4;
+  --gray-bg:#f2f2ef;
+  --r:6px;--r2:8px;
+  --font:'IBM Plex Sans',sans-serif;
+  --mono:'IBM Plex Mono',monospace;
 }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; }
-.topbar { background: var(--card); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 100; flex-wrap: wrap; gap: 8px; }
-.logo { font-family: var(--mono); font-size: 13px; font-weight: 500; letter-spacing: 0.05em; }
-.logo span { color: var(--green); }
-.topbar-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.huddle-pill { display: flex; align-items: center; gap: 6px; background: var(--green-bg); color: var(--green-text); font-size: 12px; font-weight: 500; padding: 5px 10px; border-radius: 20px; }
-.huddle-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-.date-label { font-family: var(--mono); font-size: 11px; color: var(--text-muted); }
-.refresh-btn { font-family: var(--mono); font-size: 11px; color: var(--text-muted); background: none; border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; cursor: pointer; }
-.refresh-btn:hover { background: var(--bg); }
-.tabs-bar { background: var(--card); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; }
-.tab { padding: 12px 20px; font-size: 13px; font-weight: 500; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; border-top: none; border-left: none; border-right: none; background: none; transition: all 0.15s; }
-.tab:hover { color: var(--text); }
-.tab.active { color: var(--text); border-bottom: 2px solid var(--text); }
-.main { padding: 2rem; max-width: 1100px; margin: 0 auto; }
-.yesterday-bar { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 20px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
-.yesterday-label { font-family: var(--mono); font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; }
-.yscores { display: flex; gap: 16px; flex-wrap: wrap; }
-.yscore { display: flex; align-items: center; gap: 8px; font-size: 13px; }
-.yscore-dot { width: 8px; height: 8px; border-radius: 50%; }
-.yscore-dot.green { background: var(--green); }
-.yscore-dot.yellow { background: var(--yellow); }
-.yscore-dot.red { background: var(--red); }
-.yscore-dot.empty { background: var(--border); }
-.va-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
-@media(max-width:700px){.va-grid{grid-template-columns:1fr}}
-.va-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; }
-.va-head { display: flex; align-items: center; gap: 12px; margin-bottom: 1.25rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--border); }
-.avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 13px; font-weight: 500; flex-shrink: 0; }
-.avatar.j { background: #e8f0fe; color: #1a4fa0; }
-.avatar.g { background: var(--green-bg); color: var(--green-text); }
-.va-name { font-size: 15px; font-weight: 600; }
-.va-role { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
-.kpi-list { display: flex; flex-direction: column; gap: 14px; }
-.kpi-top { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 6px; }
-.kpi-name { font-size: 12px; color: var(--text-muted); }
-.kpi-nums { display: flex; align-items: baseline; gap: 6px; }
-.kpi-val { font-family: var(--mono); font-size: 22px; font-weight: 500; }
-.kpi-target { font-family: var(--mono); font-size: 11px; color: var(--text-muted); }
-.bar-track { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; margin-bottom: 5px; }
-.bar-fill { height: 100%; border-radius: 3px; transition: width 0.6s cubic-bezier(.4,0,.2,1); width: 0%; }
-.bar-fill.green { background: var(--green); }
-.bar-fill.yellow { background: var(--yellow); }
-.bar-fill.red { background: var(--red); }
-.kpi-badge { display: inline-block; font-size: 10px; font-weight: 500; font-family: var(--mono); padding: 2px 7px; border-radius: 4px; }
-.kpi-badge.green { background: var(--green-bg); color: var(--green-text); }
-.kpi-badge.yellow { background: var(--yellow-bg); color: var(--yellow-text); }
-.kpi-badge.red { background: var(--red-bg); color: var(--red-text); }
-.kpi-badge.empty { background: var(--bg); color: var(--text-muted); border: 1px solid var(--border); }
-.streak-section { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
-.streak-title { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 1.25rem; }
-.streak-rows { display: flex; flex-direction: column; gap: 14px; }
-.streak-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.streak-name { font-size: 12px; color: var(--text-muted); width: 130px; flex-shrink: 0; }
-.streak-days { display: flex; gap: 5px; }
-.sday { width: 32px; height: 32px; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 9px; font-family: var(--mono); gap: 2px; }
-.sday.hit { background: var(--green-bg); color: var(--green-text); }
-.sday.miss { background: var(--red-bg); color: var(--red-text); }
-.sday.future { background: var(--bg); color: var(--text-muted); border: 1px solid var(--border); }
-.sday-check { font-size: 11px; }
-.sday-label { font-size: 8px; }
-.streak-count { font-family: var(--mono); font-size: 11px; color: var(--text-muted); }
-.weekly-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
-.weekly-title { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 1.25rem; }
-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-th { text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 500; color: var(--text-muted); border-bottom: 1px solid var(--border); font-family: var(--mono); }
-td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 13px; }
-tr:last-child td { border-bottom: none; }
-.weekly-totals { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-top: 1.5rem; }
-.total-card { background: var(--bg); border-radius: 8px; padding: 12px; }
-.total-label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
-.total-val { font-family: var(--mono); font-size: 20px; font-weight: 500; }
-.total-target { font-family: var(--mono); font-size: 10px; color: var(--text-muted); margin-top: 2px; }
-.monthly-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(200px,1fr)); gap: 12px; }
-.monthly-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; }
-.monthly-label { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; }
-.monthly-val { font-family: var(--mono); font-size: 28px; font-weight: 500; margin-bottom: 4px; }
-.monthly-target { font-size: 11px; color: var(--text-muted); margin-bottom: 10px; }
-.loading { display: flex; align-items: center; justify-content: center; height: 200px; font-family: var(--mono); font-size: 13px; color: var(--text-muted); flex-direction: column; gap: 8px; }
-.last-updated { font-family: var(--mono); font-size: 10px; color: var(--text-muted); text-align: right; margin-bottom: 1rem; }
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+
+/* TOP BAR */
+.topbar{height:50px;background:var(--white);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:14px;position:sticky;top:0;z-index:50}
+.logo{font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:.14em;color:var(--text);flex-shrink:0}
+.sep{width:1px;height:18px;background:var(--border);flex-shrink:0}
+.chips{display:flex;gap:6px;flex:1}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:4px;font-size:11px;font-family:var(--mono);border:1px solid transparent;white-space:nowrap}
+.chip-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.c-red{background:var(--red-bg);border-color:var(--red-bd);color:var(--red)}.c-red .chip-dot{background:var(--red)}
+.c-amber{background:var(--amber-bg);border-color:var(--amber-bd);color:var(--amber)}.c-amber .chip-dot{background:var(--amber)}
+.c-blue{background:var(--blue-bg);border-color:var(--blue-bd);color:var(--blue)}.c-blue .chip-dot{background:var(--blue)}
+.c-green{background:var(--green-bg);border-color:var(--green-bd);color:var(--green)}.c-green .chip-dot{background:var(--green)}
+.c-gray{background:var(--gray-bg);border-color:var(--border);color:var(--text2)}.c-gray .chip-dot{background:var(--text3)}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.clock{font-family:var(--mono);font-size:11px;color:var(--text3)}
+
+/* NAV */
+.nav{background:var(--white);border-bottom:1px solid var(--border);display:flex;padding:0 24px}
+.nav-item{padding:10px 14px;font-size:13px;font-weight:500;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:color .1s;user-select:none;display:flex;align-items:center;gap:7px}
+.nav-item:hover{color:var(--text2)}.nav-item.active{color:var(--text);border-bottom-color:var(--text)}
+.nav-badge{font-size:10px;font-weight:600;font-family:var(--mono);padding:1px 5px;border-radius:3px;background:var(--red-bg);color:var(--red);border:1px solid var(--red-bd)}
+
+/* LAYOUT */
+.page{padding:24px;max-width:1140px}
+.section{display:none}.section.active{display:block}
+.page-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;gap:12px}
+.page-title{font-size:18px;font-weight:600;color:var(--text)}
+.page-sub{font-size:12px;color:var(--text3);font-family:var(--mono);margin-top:3px}
+
+/* SYNC STATUS BAR */
+.sync-bar{display:flex;align-items:center;gap:10px;padding:9px 14px;background:var(--white);border:1px solid var(--border);border-radius:var(--r2);margin-bottom:14px;font-size:12px;font-family:var(--mono)}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--text3);flex-shrink:0}
+.sync-dot.live{background:var(--green)}
+.sync-dot.waiting{background:var(--amber)}
+.sync-text{color:var(--text2);flex:1}
+.sync-time{color:var(--text3);margin-left:auto}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.sync-dot.live{animation:blink 2s ease-in-out infinite}
+
+/* STATS */
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.stat{background:var(--white);border:1px solid var(--border);border-radius:var(--r2);padding:14px 16px}
+.stat-label{font-size:11px;color:var(--text3);margin-bottom:6px;font-family:var(--mono)}
+.stat-val{font-size:26px;font-weight:600;line-height:1;font-family:var(--mono);color:var(--text)}
+.stat-val.red{color:var(--red)}.stat-val.amber{color:var(--amber)}.stat-val.blue{color:var(--blue)}
+
+/* TIER TABS */
+.tier-row{display:flex;gap:6px;margin-bottom:14px}
+.ttab{padding:7px 14px;border-radius:var(--r2);border:1px solid var(--border);background:var(--white);cursor:pointer;transition:all .1s;font-size:12px;font-weight:500;color:var(--text2);display:flex;align-items:center;gap:8px;user-select:none}
+.ttab:hover{border-color:var(--border2)}
+.ttab.on.t-all{border-color:var(--border2);background:var(--gray-bg);color:var(--text)}
+.ttab.on.t-hot{border-color:var(--red-bd);background:var(--red-bg);color:var(--red)}
+.ttab.on.t-warm{border-color:var(--amber-bd);background:var(--amber-bg);color:var(--amber)}
+.ttab.on.t-watch{border-color:var(--blue-bd);background:var(--blue-bg);color:var(--blue)}
+.tc{font-family:var(--mono);font-size:10px;font-weight:600;padding:1px 5px;border-radius:3px;background:var(--gray-bg);color:var(--text3)}
+.ttab.on.t-hot  .tc{background:var(--red-bg);color:var(--red);border:1px solid var(--red-bd)}
+.ttab.on.t-warm .tc{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd)}
+.ttab.on.t-watch .tc{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-bd)}
+
+/* CARD & TABLE */
+.card{background:var(--white);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+thead th{font-size:10px;font-weight:500;font-family:var(--mono);color:var(--text3);text-align:left;padding:9px 14px;border-bottom:1px solid var(--border);background:#fafaf8;white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--border);transition:background .08s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:#fafaf8}
+tbody td{padding:11px 14px;font-size:13px;color:var(--text2);vertical-align:middle}
+td.addr{color:var(--text);font-weight:500;font-size:13px}
+td.mono{font-family:var(--mono);font-size:12px}
+
+/* BADGES */
+.delta{display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;font-family:var(--mono);font-size:12px;font-weight:500;white-space:nowrap}
+.d-hot{background:var(--red-bg);border:1px solid var(--red-bd);color:var(--red)}
+.d-warm{background:var(--amber-bg);border:1px solid var(--amber-bd);color:var(--amber)}
+.d-watch{background:var(--blue-bg);border:1px solid var(--blue-bd);color:var(--blue)}
+.tp{display:inline-flex;padding:2px 6px;border-radius:3px;font-family:var(--mono);font-size:10px;font-weight:600;white-space:nowrap}
+.tp-hot{background:var(--red-bg);border:1px solid var(--red-bd);color:var(--red)}
+.tp-warm{background:var(--amber-bg);border:1px solid var(--amber-bd);color:var(--amber)}
+.tp-watch{background:var(--blue-bg);border:1px solid var(--blue-bd);color:var(--blue)}
+
+/* EMPTY */
+.empty{padding:52px 24px;text-align:center}
+.empty-glyph{font-size:22px;font-family:var(--mono);color:var(--text3);margin-bottom:12px}
+.empty-title{font-size:14px;font-weight:600;color:var(--text2);margin-bottom:5px}
+.empty-sub{font-size:12px;color:var(--text3);line-height:1.7;max-width:400px;margin:0 auto 18px}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;border-radius:var(--r);font-size:12px;font-family:var(--font);font-weight:500;cursor:pointer;transition:all .1s;border:1px solid transparent}
+.btn-dark{background:var(--text);border-color:var(--text);color:#fff}.btn-dark:hover{background:#2a2a28}
+.btn-ghost{background:var(--white);border-color:var(--border2);color:var(--text2)}.btn-ghost:hover{border-color:var(--text3);color:var(--text)}
+.btn-red{background:var(--red-bg);border-color:var(--red-bd);color:var(--red)}
+.btn-sm{padding:4px 10px;font-size:11px}
+
+/* SCRIPT SETUP PANEL */
+.setup-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r2);margin-bottom:14px;overflow:hidden}
+.setup-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none}
+.setup-head-title{font-size:13px;font-weight:600;color:var(--text)}
+.setup-head-sub{font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:2px}
+.setup-body{padding:18px;display:none}
+.setup-body.open{display:block}
+.setup-step{display:flex;gap:12px;margin-bottom:16px;font-size:13px;color:var(--text2);line-height:1.6}
+.setup-step:last-child{margin-bottom:0}
+.sn{width:22px;height:22px;border-radius:50%;background:var(--gray-bg);border:1px solid var(--border2);color:var(--text2);font-family:var(--mono);font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.code-block{background:#1e1e1e;border-radius:var(--r2);padding:14px 16px;margin:10px 0;overflow-x:auto;position:relative}
+.code-block pre{font-family:var(--mono);font-size:11px;color:#d4d4d4;line-height:1.7;white-space:pre}
+.code-block .kw{color:#569cd6}.code-block .str{color:#ce9178}.code-block .cm{color:#6a9955}.code-block .fn{color:#dcdcaa}.code-block .num{color:#b5cea8}.code-block .var{color:#9cdcfe}
+.copy-btn{position:absolute;top:10px;right:10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:4px;color:#ccc;font-size:10px;font-family:var(--mono);padding:3px 8px;cursor:pointer;transition:all .1s}
+.copy-btn:hover{background:rgba(255,255,255,.15)}
+.inline-code{font-family:var(--mono);font-size:11px;background:var(--gray-bg);border:1px solid var(--border);border-radius:3px;padding:1px 5px;color:var(--text)}
+
+/* VA SECTION */
+.va-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.va-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden}
+.va-head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.va-av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;font-family:var(--mono)}
+.va-av.jo{background:var(--blue-bg);color:var(--blue)}
+.va-av.gr{background:var(--green-bg);color:var(--green)}
+.va-name{font-size:13px;font-weight:600;color:var(--text)}
+.va-role{font-size:11px;color:var(--text3);font-family:var(--mono)}
+.va-tag{margin-left:auto}
+.va-body{padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.metric{display:flex;flex-direction:column;gap:5px}
+.metric-top{display:flex;justify-content:space-between;font-size:12px}
+.metric-name{color:var(--text2)}.metric-num{color:var(--text3);font-family:var(--mono);font-size:11px}
+.bar{height:4px;background:var(--bg);border-radius:2px;overflow:hidden;border:1px solid var(--border)}
+.bar-fill{height:100%;border-radius:2px;transition:width .6s ease}
+.bar-blue{background:var(--blue)}.bar-green{background:var(--green)}.bar-amber{background:var(--amber)}
+.not-logged{font-size:10px;font-family:var(--mono);color:var(--text3);padding:2px 6px;background:var(--bg);border:1px solid var(--border);border-radius:3px}
+.on-track{font-size:10px;font-family:var(--mono);color:var(--green);font-weight:500}
+
+/* STREAK */
+.streak-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r2);padding:16px 18px;margin-bottom:12px}
+.streak-head{font-size:10px;font-weight:500;font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:14px}
+.streak-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.streak-row:last-child{margin-bottom:0}
+.streak-lbl{font-size:12px;color:var(--text2);width:140px;flex-shrink:0}
+.streak-days{display:flex;gap:4px}
+.s-day{width:28px;height:28px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;font-family:var(--mono);color:var(--text3);background:var(--bg);border:1px solid var(--border)}
+.s-day.hit{background:var(--green-bg);border-color:var(--green-bd);color:var(--green)}
+.s-day.miss{background:var(--red-bg);border-color:var(--red-bd);color:var(--red)}
+
+/* REPORT */
+.report-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;margin-bottom:12px}
+.report-head{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.report-title{font-size:13px;font-weight:600;color:var(--text)}
+.report-sub{font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:1px}
+.sheets-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r2);padding:16px 18px}
+.sheets-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px}
+.sheets-sub{font-size:12px;color:var(--text3);margin-bottom:12px;line-height:1.6}
+.input-row{display:flex;gap:8px}
+.form-input{background:var(--bg);border:1px solid var(--border2);border-radius:var(--r);padding:7px 10px;font-size:12px;font-family:var(--font);color:var(--text);outline:none;transition:border-color .1s;width:100%}
+.form-input:focus{border-color:var(--blue);background:var(--white)}
+.form-input::placeholder{color:var(--text3)}
+.period-toggle{display:flex;gap:2px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:2px}
+.p-btn{padding:4px 11px;border-radius:4px;font-size:11px;font-family:var(--mono);cursor:pointer;border:none;background:transparent;color:var(--text3);transition:all .1s}
+.p-btn.active{background:var(--white);color:var(--text);border:1px solid var(--border)}
+
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{display:inline-block;width:10px;height:10px;border:1.5px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin .65s linear infinite}
+
+@media(max-width:760px){
+  .stat-row{grid-template-columns:1fr 1fr}
+  .va-grid{grid-template-columns:1fr}
+  .chips .chip:nth-child(n+4){display:none}
+  .page{padding:14px}
+  .tier-row{flex-wrap:wrap}
+}
 </style>
 </head>
 <body>
+
 <div class="topbar">
-  <div class="logo">NANU<span>.</span>KPI</div>
+  <div class="logo">NANU REI</div>
+  <div class="sep"></div>
+  <div class="chips">
+    <div class="chip c-red"><div class="chip-dot"></div><span id="chipHot">0</span> hot</div>
+    <div class="chip c-amber"><div class="chip-dot"></div><span id="chipWarm">0</span> warm</div>
+    <div class="chip c-blue"><div class="chip-dot"></div><span id="chipWatch">0</span> watch</div>
+    <div class="chip c-green" id="chipJoely"><div class="chip-dot"></div>Joely</div>
+    <div class="chip c-green" id="chipGrace"><div class="chip-dot"></div>Grace</div>
+  </div>
   <div class="topbar-right">
-    <div class="huddle-pill"><div class="huddle-dot"></div>Morning huddle · 9:15 AM</div>
-    <div class="date-label" id="today-label"></div>
-    <button class="refresh-btn" onclick="loadData()">↻ refresh</button>
+    <div class="clock" id="clock">—</div>
   </div>
 </div>
-<div class="tabs-bar">
-  <button class="tab active" onclick="switchTab('daily')">Daily</button>
-  <button class="tab" onclick="switchTab('weekly')">Weekly</button>
-  <button class="tab" onclick="switchTab('monthly')">Monthly</button>
+
+<div class="nav">
+  <div class="nav-item active" onclick="tab('hot')">
+    Hot Sheet
+    <span class="nav-badge" id="navBadge" style="display:none">0</span>
+  </div>
+  <div class="nav-item" onclick="tab('kpi')">VA Accountability</div>
 </div>
-<div class="main">
-  <div id="loading" class="loading"><div>Loading data from Google Sheets...</div></div>
-  <div id="content" style="display:none">
-    <div class="last-updated" id="last-updated"></div>
-    <div id="view-daily">
-      <div class="yesterday-bar">
-        <div class="yesterday-label">Yesterday</div>
-        <div class="yscores" id="yesterday-scores"></div>
+
+<div class="page">
+
+  <!-- HOT SHEET -->
+  <div class="section active" id="sec-hot">
+
+    <div class="page-head">
+      <div>
+        <div class="page-title">Hot sheet</div>
+        <div class="page-sub" id="dateLabel">—</div>
       </div>
-      <div class="va-grid">
-        <div class="va-card">
-          <div class="va-head">
-            <div class="avatar j">JO</div>
-            <div><div class="va-name">Joely</div><div class="va-role">Property sourcing · Buyer list</div></div>
-          </div>
-          <div class="kpi-list">
-            <div class="kpi-item">
-              <div class="kpi-top">
-                <div class="kpi-name">Properties found today</div>
-                <div class="kpi-nums"><div class="kpi-val" id="d-props">—</div><div class="kpi-target">/ 25</div></div>
-              </div>
-              <div class="bar-track"><div class="bar-fill" id="bar-props"></div></div>
-              <span class="kpi-badge empty" id="badge-props">not logged</span>
-            </div>
-            <div class="kpi-item">
-              <div class="kpi-top">
-                <div class="kpi-name">Buyers added today</div>
-                <div class="kpi-nums"><div class="kpi-val" id="d-buyers">—</div><div class="kpi-target">/ 25</div></div>
-              </div>
-              <div class="bar-track"><div class="bar-fill" id="bar-buyers"></div></div>
-              <span class="kpi-badge empty" id="badge-buyers">not logged</span>
-            </div>
-          </div>
-        </div>
-        <div class="va-card">
-          <div class="va-head">
-            <div class="avatar g">GR</div>
-            <div><div class="va-name">Grace</div><div class="va-role">Comps · Offers</div></div>
-          </div>
-          <div class="kpi-list">
-            <div class="kpi-item">
-              <div class="kpi-top">
-                <div class="kpi-name">Offers sent today</div>
-                <div class="kpi-nums"><div class="kpi-val" id="d-offers">—</div><div class="kpi-target">/ 20</div></div>
-              </div>
-              <div class="bar-track"><div class="bar-fill" id="bar-offers"></div></div>
-              <span class="kpi-badge empty" id="badge-offers">not logged</span>
-            </div>
-            <div class="kpi-item">
-              <div class="kpi-top">
-                <div class="kpi-name">Comp rate (offers / properties)</div>
-                <div class="kpi-nums"><div class="kpi-val" id="d-rate">—</div><div class="kpi-target">/ 100%</div></div>
-              </div>
-              <div class="bar-track"><div class="bar-fill" id="bar-rate"></div></div>
-              <span class="kpi-badge empty" id="badge-rate">not logged</span>
-            </div>
-          </div>
-        </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-ghost btn-sm" onclick="loadSample()">Load sample</button>
+        <button class="btn btn-red btn-sm" id="clearBtn" style="display:none" onclick="clearAll()">Clear all</button>
       </div>
-      <div class="streak-section">
-        <div class="streak-title">This week — consistency streaks (Mon–Fri)</div>
-        <div class="streak-rows">
-          <div class="streak-row"><div class="streak-name">Joely · properties</div><div class="streak-days" id="streak-j-props"></div><div class="streak-count" id="sc-j-props"></div></div>
-          <div class="streak-row"><div class="streak-name">Joely · buyers</div><div class="streak-days" id="streak-j-buyers"></div><div class="streak-count" id="sc-j-buyers"></div></div>
-          <div class="streak-row"><div class="streak-name">Grace · offers</div><div class="streak-days" id="streak-grace"></div><div class="streak-count" id="sc-grace"></div></div>
+    </div>
+
+    <!-- LIVE SYNC STATUS -->
+    <div class="sync-bar">
+      <div class="sync-dot live" id="syncDot"></div>
+      <span class="sync-text" id="syncText">Listening for OfferGun email data from Google Apps Script</span>
+      <span class="sync-time" id="syncTime" style="display:none"></span>
+    </div>
+
+    <!-- STATS -->
+    <div class="stat-row">
+      <div class="stat" style="border-top:3px solid var(--red)">
+        <div class="stat-label">Hot — ≥10% drop</div>
+        <div class="stat-val red" id="sHot">0</div>
+      </div>
+      <div class="stat" style="border-top:3px solid var(--amber)">
+        <div class="stat-label">Warm — 5 to 9% drop</div>
+        <div class="stat-val amber" id="sWarm">0</div>
+      </div>
+      <div class="stat" style="border-top:3px solid var(--blue)">
+        <div class="stat-label">Watch — under 5%</div>
+        <div class="stat-val blue" id="sWatch">0</div>
+      </div>
+    </div>
+
+    <!-- TIER FILTER -->
+    <div class="tier-row">
+      <div class="ttab t-all on" id="tt-all" onclick="setTier('all')">All <span class="tc" id="tc-all">0</span></div>
+      <div class="ttab t-hot" id="tt-hot" onclick="setTier('hot')">Hot <span class="tc" id="tc-hot">0</span></div>
+      <div class="ttab t-warm" id="tt-warm" onclick="setTier('warm')">Warm <span class="tc" id="tc-warm">0</span></div>
+      <div class="ttab t-watch" id="tt-watch" onclick="setTier('watch')">Watch <span class="tc" id="tc-watch">0</span></div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="card" id="tableCard">
+      <div id="tableWrap"></div>
+    </div>
+
+    <!-- GOOGLE APPS SCRIPT SETUP -->
+    <div class="setup-card" style="margin-top:16px">
+      <div class="setup-head" onclick="toggleSetup()">
+        <div>
+          <div class="setup-head-title">Google Apps Script setup guide</div>
+          <div class="setup-head-sub">Follow these steps once to activate automatic email sync</div>
+        </div>
+        <div id="setupChevron" style="font-size:18px;color:var(--text3)">›</div>
+      </div>
+      <div class="setup-body" id="setupBody">
+
+        <div class="setup-step">
+          <div class="sn">1</div>
+          <div>Go to <strong>script.google.com</strong> and click <strong>New Project</strong>. Name it <span class="inline-code">NANU Email Sync</span>.</div>
+        </div>
+
+        <div class="setup-step">
+          <div class="sn">2</div>
+          <div>Delete everything in the editor and paste the entire script below.</div>
+        </div>
+
+        <div class="code-block" id="scriptBlock">
+          <button class="copy-btn" onclick="copyScript()">Copy</button>
+          <pre id="scriptPre"></pre>
+        </div>
+
+        <div class="setup-step">
+          <div class="sn">3</div>
+          <div>On line 2 of the script, replace <span class="inline-code">YOUR_GITHUB_PAGES_URL</span> with your actual dashboard URL — for example <span class="inline-code">https://keanupailloux.github.io/nanu-kpi/</span></div>
+        </div>
+
+        <div class="setup-step">
+          <div class="sn">4</div>
+          <div>Click <strong>Run</strong> → select <span class="inline-code">checkOfferGunEmails</span> → authorize when Google asks. This is a one-time permission for the script to read your Gmail.</div>
+        </div>
+
+        <div class="setup-step">
+          <div class="sn">5</div>
+          <div>Click <strong>Triggers</strong> (clock icon on the left) → <strong>Add Trigger</strong> → set it to run <span class="inline-code">checkOfferGunEmails</span> every <strong>5 minutes</strong>. Click Save.</div>
+        </div>
+
+        <div class="setup-step">
+          <div class="sn">6</div>
+          <div>Done. The script will now wake up every 5 minutes, find new OfferGun price drop emails, and push them directly to this dashboard. You will never touch it again.</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- VA ACCOUNTABILITY -->
+  <div class="section" id="sec-kpi">
+    <div class="page-head">
+      <div>
+        <div class="page-title">VA accountability</div>
+        <div class="page-sub" id="gsStatus">Morning huddle — targets reset daily</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="btn btn-ghost btn-sm" id="refreshBtn" onclick="doRefresh()">↻ Sync</button>
+        <div class="period-toggle">
+          <button class="p-btn active" onclick="setPeriod('daily',this)">Daily</button>
+          <button class="p-btn" onclick="setPeriod('weekly',this)">Weekly</button>
+          <button class="p-btn" onclick="setPeriod('monthly',this)">Monthly</button>
         </div>
       </div>
     </div>
-    <div id="view-weekly" style="display:none">
-      <div class="weekly-card">
-        <div class="weekly-title">This week</div>
-        <table><thead><tr><th>Day</th><th>Properties</th><th>Buyers</th><th>Offers</th><th>Joely</th><th>Grace</th></tr></thead><tbody id="weekly-body"></tbody></table>
-        <div class="weekly-totals" id="weekly-totals"></div>
+
+    <div class="va-grid">
+      <div class="va-card">
+        <div class="va-head">
+          <div class="va-av jo">JO</div>
+          <div><div class="va-name">Joely</div><div class="va-role">Property sourcing · Buyer list</div></div>
+          <div class="va-tag" id="joelyTag"><span class="not-logged">not logged</span></div>
+        </div>
+        <div class="va-body">
+          <div class="metric">
+            <div class="metric-top"><span class="metric-name">Properties found today</span><span class="metric-num" id="jPropVal">— / 25</span></div>
+            <div class="bar"><div class="bar-fill bar-blue" id="jPropBar" style="width:0%"></div></div>
+          </div>
+          <div class="metric">
+            <div class="metric-top"><span class="metric-name">Buyers added today</span><span class="metric-num" id="jBuyVal">— / 25</span></div>
+            <div class="bar"><div class="bar-fill bar-blue" id="jBuyBar" style="width:0%"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="va-card">
+        <div class="va-head">
+          <div class="va-av gr">GR</div>
+          <div><div class="va-name">Grace</div><div class="va-role">Comps · Offers via OfferGun</div></div>
+          <div class="va-tag" id="graceTag"><span class="not-logged">not logged</span></div>
+        </div>
+        <div class="va-body">
+          <div class="metric">
+            <div class="metric-top"><span class="metric-name">Offers sent today</span><span class="metric-num" id="gOfferVal">— / 20</span></div>
+            <div class="bar"><div class="bar-fill bar-green" id="gOfferBar" style="width:0%"></div></div>
+          </div>
+          <div class="metric">
+            <div class="metric-top"><span class="metric-name">Comp rate</span><span class="metric-num" id="gCompVal">— / 100%</span></div>
+            <div class="bar"><div class="bar-fill bar-green" id="gCompBar" style="width:0%"></div></div>
+          </div>
+        </div>
       </div>
     </div>
-    <div id="view-monthly" style="display:none">
-      <div class="monthly-grid" id="monthly-grid"></div>
+
+    <div class="streak-card">
+      <div class="streak-head">This week — consistency (Mon – Fri)</div>
+      <div id="streakRows"></div>
+    </div>
+
+    <div class="report-card">
+      <div class="report-head">
+        <div><div class="report-title">Weekly report</div><div class="report-sub">Auto-generated · resets Monday</div></div>
+        <button class="btn btn-ghost btn-sm" onclick="exportCSV()">Export CSV</button>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Day</th><th>Joely — Props</th><th>Joely — Buyers</th><th>Grace — Offers</th><th>Grace — Comp%</th><th>Status</th></tr></thead>
+          <tbody id="weeklyBody"><tr><td colspan="6" style="text-align:center;padding:28px;font-size:12px;color:var(--text3);font-family:var(--mono)">Connect Google Sheets below to populate</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="sheets-card">
+      <div class="sheets-title">Google Sheets connection</div>
+      <div class="sheets-sub">File → Share → Publish to web → CSV → paste URL below.<br>Columns: Day, Joely Props, Joely Buyers, Grace Offers, Grace Comp%</div>
+      <div class="input-row">
+        <input class="form-input" id="sheetsUrl" placeholder="https://docs.google.com/spreadsheets/d/…/pub?output=csv">
+        <button class="btn btn-dark" onclick="saveSheets()">Save & sync</button>
+      </div>
     </div>
   </div>
 </div>
+
 <script>
-const SHEET_ID = '1c154od2ZQEgRYyzbQtMRe9j1XcD1Bpub3Ff_sj2nh-k';
-const SHEET_NAME = 'KPI Sheet';
-const API_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}`;
-const DAYS = ['Mon','Tue','Wed','Thu','Fri'];
-const JP=25, JB=25, GO=20;
-let sheetData = {};
+/* ── STORAGE ── */
+const DEALS_KEY  = 'nanu_deals_v6';
+const SHEETS_DEFAULT = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTTseyrdiHuS0KYj0n9Cf2ge0XIQRJmThn4wYX6475tupOAW3VeyTpyhROzVg3iab3fyMexnccadZ1e/pub?gid=0&single=true&output=csv';
+const SHEETS_KEY = 'nanu_sheets_v5';
+let deals = [];
+let currentTier = 'all';
 
-// Arizona is UTC-7 (MST, no daylight saving)
-function getAZDate(){
-  const now = new Date();
-  const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-  return new Date(utc + (-7 * 3600000));
+function persist() { localStorage.setItem(DEALS_KEY, JSON.stringify(deals)); }
+function hydrate() {
+  try { deals = JSON.parse(localStorage.getItem(DEALS_KEY)||'[]'); } catch(e){ deals=[]; }
+  pruneOld();
+  const u = localStorage.getItem(SHEETS_KEY) || SHEETS_DEFAULT;
+  document.getElementById('sheetsUrl').value = u;
+  if (!localStorage.getItem(SHEETS_KEY)) localStorage.setItem(SHEETS_KEY, SHEETS_DEFAULT);
+}
+function pruneOld() {
+  const cut = Date.now() - 7*24*60*60*1000;
+  const before = deals.length;
+  deals = deals.filter(d=>d.ts>cut);
+  if (deals.length !== before) persist();
 }
 
-// Build a YYYY-MM-DD key using local date
-function getKey(d){
-  const y = d.getFullYear();
-  const m = String(d.getMonth()+1).padStart(2,'0');
-  const day = String(d.getDate()).padStart(2,'0');
-  return `${y}-${m}-${day}`;
-}
+/* ── INBOUND WEBHOOK ──
+   The Google Apps Script posts JSON to this page's URL with ?nanu_push=1
+   We read it from sessionStorage written by a URL param handler below.
+   Architecture: script posts to   https://your-site.com/?nanu_push=1&addr=...&drop=...&current=...&offer=...
+   This page on load checks for those params and ingests the deal.
+── */
+function checkUrlParams() {
+  const p = new URLSearchParams(window.location.search);
+  if (!p.get('nanu_push')) return;
+  const addr    = p.get('addr')    || '';
+  const drop    = parseFloat(p.get('drop'))    || 0;
+  const current = parseFloat(p.get('current')) || 0;
+  const offer   = parseFloat(p.get('offer'))   || 0;
+  const agent   = p.get('agent')   || '';
+  const msgId   = p.get('mid')     || '';
 
-// Parse any date format coming from the sheet
-function parseSheetDate(raw){
-  if(!raw) return null;
-  // Google Visualization Date object format: Date(2026,2,23) — month is 0-indexed
-  const dtMatch = String(raw).match(/Date\((\d+),(\d+),(\d+)\)/);
-  if(dtMatch){
-    return new Date(parseInt(dtMatch[1]), parseInt(dtMatch[2]), parseInt(dtMatch[3]));
-  }
-  // String format: M/D/YYYY or MM/DD/YYYY
-  if(typeof raw === 'string' && raw.includes('/')){
-    const parts = raw.split('/');
-    if(parts.length === 3){
-      return new Date(parseInt(parts[2]), parseInt(parts[0])-1, parseInt(parts[1]));
-    }
-  }
-  return null;
-}
+  if (!addr || !current) return;
 
-function getWeekDates(){
-  const today = getAZDate();
-  const dow = today.getDay();
-  const monday = new Date(today);
-  monday.setDate(today.getDate() - (dow===0?6:dow-1));
-  const dates = [];
-  for(let i=0;i<5;i++){
-    const d = new Date(monday);
-    d.setDate(monday.getDate()+i);
-    dates.push(d);
-  }
-  return dates;
-}
-
-function statusP(v){ return v>=JP?'green':v>=13?'yellow':'red'; }
-function statusB(v){ return v>=JB?'green':v>=13?'yellow':'red'; }
-function statusO(v){ return v>=GO?'green':v>=10?'yellow':'red'; }
-function pct(v,t){ return Math.min(100,Math.round(v/t*100)); }
-function fmtDate(d){ return d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}); }
-
-async function loadData(){
-  document.getElementById('loading').style.display='flex';
-  document.getElementById('content').style.display='none';
-  try{
-    const res = await fetch(API_URL+'&cachebust='+Date.now());
-    const text = await res.text();
-    const json = JSON.parse(text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*?)\);/)[1]);
-    const rows = json.table.rows;
-    sheetData = {};
-    rows.forEach(row => {
-      if(!row.c||!row.c[0]||!row.c[0].v) return;
-      const d = parseSheetDate(row.c[0].v);
-      if(!d) return;
-      const key = getKey(d);
-      if(!sheetData[key]) sheetData[key]={props:0,buyers:0,offers:0};
-      sheetData[key].props  += (row.c[1]&&row.c[1].v) ? Number(row.c[1].v) : 0;
-      sheetData[key].buyers += (row.c[2]&&row.c[2].v) ? Number(row.c[2].v) : 0;
-      sheetData[key].offers += (row.c[3]&&row.c[3].v) ? Number(row.c[3].v) : 0;
-    });
-    // DEBUG - remove after testing
-    const debugKeys = Object.keys(sheetData).join(', ');
-    const todayKey = getKey(getAZDate());
-    console.log('Sheet keys found:', debugKeys);
-    console.log('Today key (AZ):', todayKey);
-    console.log('Today data:', JSON.stringify(sheetData[todayKey]));
-    document.getElementById('last-updated').textContent = 'Last updated: '+getAZDate().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
-    renderAll();
-    document.getElementById('loading').style.display='none';
-    document.getElementById('content').style.display='block';
-  } catch(e){
-    document.getElementById('loading').innerHTML = '<div>Error loading data.</div><div style="font-size:11px;margin-top:4px">Make sure your sheet is set to "Anyone with the link can view"</div>';
-  }
-}
-
-function setCard(valId,barId,badgeId,val,pctVal,status,target){
-  document.getElementById(valId).textContent = val;
-  const bar = document.getElementById(barId);
-  bar.style.width = pctVal+'%';
-  bar.className = 'bar-fill '+status;
-  const badge = document.getElementById(badgeId);
-  badge.className = 'kpi-badge '+status;
-  badge.textContent = pctVal+'% of target ('+val+'/'+target+')';
-}
-
-function renderYesterday(){
-  const y = getAZDate();
-  y.setDate(y.getDate()-1);
-  if(y.getDay()===0) y.setDate(y.getDate()-2);
-  if(y.getDay()===6) y.setDate(y.getDate()-1);
-  const e = sheetData[getKey(y)]||{};
-  const p=e.props||0, b=e.buyers||0, o=e.offers||0;
-  const el = document.getElementById('yesterday-scores');
-  if(!p&&!b&&!o){
-    el.innerHTML='<span style="font-size:13px;color:var(--text-muted)">No data for '+fmtDate(y)+'</span>';
+  // Deduplicate by message ID
+  if (msgId && deals.find(d=>d.mid===msgId)) {
+    window.history.replaceState({}, '', window.location.pathname);
     return;
   }
-  el.innerHTML=[
-    {label:'Properties',val:p,s:statusP(p)},
-    {label:'Buyers',val:b,s:statusB(b)},
-    {label:'Offers',val:o,s:statusO(o)},
-  ].map(i=>`<div class="yscore"><div class="yscore-dot ${i.s}"></div><span>${i.label}: <strong>${i.val}</strong></span></div>`).join('');
+
+  // Derive original from drop% and current price
+  const original = drop > 0 ? Math.round(current / (1 - drop/100)) : current;
+
+  deals.push({ addr, original, offer, current, drop: -drop, agent, mid: msgId, ts: Date.now() });
+  persist();
+
+  // Update sync indicator
+  document.getElementById('syncDot').className = 'sync-dot live';
+  document.getElementById('syncText').textContent = 'New property received from OfferGun — ' + addr.split(',')[0];
+  document.getElementById('syncTime').style.display = 'block';
+  document.getElementById('syncTime').textContent = new Date().toLocaleTimeString();
+
+  // Clean URL
+  window.history.replaceState({}, '', window.location.pathname);
+  render();
 }
 
-function renderToday(){
-  const e = sheetData[getKey(getAZDate())]||{};
-  const p=e.props||0, b=e.buyers||0, o=e.offers||0;
-  if(!p&&!b&&!o) return;
-  setCard('d-props','bar-props','badge-props',p,pct(p,JP),statusP(p),JP);
-  setCard('d-buyers','bar-buyers','badge-buyers',b,pct(b,JB),statusB(b),JB);
-  setCard('d-offers','bar-offers','badge-offers',o,pct(o,GO),statusO(o),GO);
-  if(p>0){
-    const rate=Math.round(o/p*100);
-    const rs=rate>=100?'green':rate>=70?'yellow':'red';
-    setCard('d-rate','bar-rate','badge-rate',rate+'%',Math.min(100,rate),rs,'100%');
+/* ── UTILS ── */
+function $m(s){ return parseFloat(String(s||'').replace(/[$,\s]/g,''))||0; }
+function fmt(n){ return n ? '$'+Math.round(n).toLocaleString() : '—'; }
+function pct(v,t){ return Math.min(100,Math.round((v/t)*100))+'%'; }
+function tier(drop){
+  if(drop===null) return 'watch';
+  const a=Math.abs(drop);
+  if(a>=10) return 'hot';
+  if(a>=5)  return 'warm';
+  return 'watch';
+}
+
+/* ── TABS ── */
+function tab(id){
+  document.querySelectorAll('.nav-item').forEach((el,i)=>el.classList.toggle('active',['hot','kpi'][i]===id));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sec-'+id).classList.add('active');
+}
+
+/* ── TIER FILTER ── */
+function setTier(t){
+  currentTier=t;
+  ['all','hot','warm','watch'].forEach(k=>{
+    const el=document.getElementById('tt-'+k);
+    el.className='ttab t-'+k+(k===t?' on':'');
+  });
+  renderTable();
+}
+
+/* ── RENDER ── */
+function render(){
+  pruneOld();
+  const hot   = deals.filter(d=>tier(d.drop)==='hot').length;
+  const warm  = deals.filter(d=>tier(d.drop)==='warm').length;
+  const watch = deals.filter(d=>tier(d.drop)==='watch').length;
+
+  ['Hot','Warm','Watch'].forEach((n,i)=>{
+    document.getElementById('s'+n).textContent=[hot,warm,watch][i];
+  });
+  document.getElementById('chipHot').textContent=hot;
+  document.getElementById('chipWarm').textContent=warm;
+  document.getElementById('chipWatch').textContent=watch;
+
+  const nb=document.getElementById('navBadge');
+  nb.textContent=hot; nb.style.display=hot>0?'inline-flex':'none';
+
+  document.getElementById('tc-all').textContent=deals.length;
+  document.getElementById('tc-hot').textContent=hot;
+  document.getElementById('tc-warm').textContent=warm;
+  document.getElementById('tc-watch').textContent=watch;
+  document.getElementById('clearBtn').style.display=deals.length?'inline-flex':'none';
+  document.getElementById('dateLabel').textContent=
+    new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  renderTable();
+}
+
+function renderTable(){
+  const wrap=document.getElementById('tableWrap');
+  let list=[...deals];
+  if(currentTier!=='all') list=list.filter(d=>tier(d.drop)===currentTier);
+  list.sort((a,b)=>{
+    const o={hot:0,warm:1,watch:2};
+    const ta=o[tier(a.drop)],tb=o[tier(b.drop)];
+    if(ta!==tb) return ta-tb;
+    return Math.abs(b.drop||0)-Math.abs(a.drop||0);
+  });
+
+  if(!list.length){
+    const msgs={
+      all:['No properties on the hot sheet yet','OfferGun price drop emails will appear here automatically once the Google Apps Script is running. Expand the setup guide below to get started.'],
+      hot:['No hot properties right now','Properties with a single-email drop of 10% or more will appear here.'],
+      warm:['No warm properties','Properties with a 5–9% drop will appear here.'],
+      watch:['Nothing to watch','Properties with a drop under 5% will appear here.'],
+    };
+    const [title,sub]=msgs[currentTier];
+    wrap.innerHTML=`<div class="empty">
+      <div class="empty-glyph">◇</div>
+      <div class="empty-title">${title}</div>
+      <div class="empty-sub">${sub}</div>
+      ${currentTier==='all'?'<button class="btn btn-dark" onclick="loadSample()">Load sample data</button>':''}
+    </div>`;
+    return;
   }
+
+  const rows=list.map((d,i)=>{
+    const t=tier(d.drop);
+    const abs=d.drop!==null?Math.abs(Math.round(d.drop*10)/10):null;
+    const ds=abs!==null?'-'+abs.toFixed(1)+'%':'—';
+    const dc={hot:'d-hot',warm:'d-warm',watch:'d-watch'}[t];
+    const pc={hot:'tp-hot',warm:'tp-warm',watch:'tp-watch'}[t];
+    const pl={hot:'HOT',warm:'WARM',watch:'WATCH'}[t];
+    const gap=d.current&&d.offer?d.current-d.offer:null;
+    const gapHtml=gap!==null
+      ?`<span style="font-family:var(--mono);font-size:11px;color:${gap<=0?'var(--green)':'var(--text3)'}">
+          ${gap<=0?'▼ $'+Math.abs(Math.round(gap)).toLocaleString()+' below offer':'$'+Math.round(gap).toLocaleString()+' above offer'}
+        </span>`
+      :'—';
+    const age=Math.floor((Date.now()-d.ts)/(1000*60*60*24));
+    const ageStr=age===0?'today':age===1?'1d ago':age+'d ago';
+    return `<tr>
+      <td><span class="tp ${pc}">${pl}</span></td>
+      <td class="addr">${d.addr}</td>
+      <td class="mono">${fmt(d.original)}</td>
+      <td class="mono">${fmt(d.offer)}</td>
+      <td class="mono">${fmt(d.current)}</td>
+      <td><span class="delta ${dc}">${ds}</span></td>
+      <td>${gapHtml}</td>
+      <td style="color:var(--text2);font-size:13px">${d.agent||'—'}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${ageStr}</td>
+      <td style="text-align:right">
+        <button onclick="removeDeal(${deals.indexOf(d)})"
+          style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:17px;line-height:1;padding:0 4px"
+          onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text3)'">×</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  wrap.innerHTML=`<div class="tbl-wrap"><table>
+    <thead><tr>
+      <th>Tier</th><th>Address</th><th>Original list</th><th>Our offer</th>
+      <th>Current price</th><th>Drop</th><th>Gap to offer</th><th>Agent</th><th>Received</th><th></th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`;
 }
 
-function buildStreak(daysElId,countId,fn){
-  const dates=getWeekDates();
-  const today=new Date();
-  const el=document.getElementById(daysElId);
-  el.innerHTML='';
-  let hits=0,elapsed=0;
-  dates.forEach((d,i)=>{
-    const isFuture=d>today;
-    const div=document.createElement('div');
-    div.className='sday';
-    const e=sheetData[getKey(d)];
-    if(isFuture){
-      div.className+=' future';
-      div.innerHTML=`<span class="sday-label">${DAYS[i]}</span>`;
-    } else {
-      elapsed++;
-      const hit=e&&fn(e);
-      if(hit){hits++;div.className+=' hit';div.innerHTML=`<span class="sday-check">✓</span><span class="sday-label">${DAYS[i]}</span>`;}
-      else{div.className+=' miss';div.innerHTML=`<span class="sday-label">${DAYS[i]}</span>`;}
+function removeDeal(i){ deals.splice(i,1); persist(); render(); }
+function clearAll(){ if(!confirm('Clear all entries?')) return; deals=[]; persist(); render(); }
+
+/* ── SAMPLE DATA ── */
+function loadSample(){
+  deals=[
+    {addr:'12731 W Eagle Ridge Ln, Surprise AZ 85374',  original:552000,offer:405100,current:479000,drop:-13.2,agent:'Tom Bright',  mid:'s1',ts:Date.now()},
+    {addr:'20271 N 81st Ln, Scottsdale AZ 85255',       original:389000,offer:340000,current:338000,drop:-13.1,agent:'Mike Torres', mid:'s2',ts:Date.now()-86400000},
+    {addr:'4482 W Peoria Ave, Glendale AZ 85302',       original:295000,offer:265000,current:271000,drop:-8.1, agent:'Sarah Kim',  mid:'s3',ts:Date.now()-172800000},
+    {addr:'8821 N 7th St, Phoenix AZ 85020',            original:252000,offer:225000,current:238000,drop:-5.6, agent:'Lisa Pham',  mid:'s4',ts:Date.now()-86400000},
+    {addr:'3344 W Thunderbird Rd, Phoenix AZ 85053',    original:241000,offer:215000,current:234000,drop:-2.9, agent:'Julie Reyes',mid:'s5',ts:Date.now()},
+  ];
+  persist(); render();
+}
+
+/* ── SETUP TOGGLE ── */
+function toggleSetup(){
+  const body=document.getElementById('setupBody');
+  const chev=document.getElementById('setupChevron');
+  const open=body.classList.toggle('open');
+  chev.textContent=open?'↓':'›';
+  chev.style.transform=open?'rotate(0)':'';
+}
+
+/* ── SCRIPT CONTENT ── */
+function buildScript(){
+  return `// NANU REI — Google Apps Script
+// Paste this in script.google.com and follow the setup guide on your dashboard
+
+var DASHBOARD_URL = 'YOUR_GITHUB_PAGES_URL'; // e.g. https://keanupailloux.github.io/nanu-kpi/
+
+function checkOfferGunEmails() {
+  var processedKey = 'nanu_processed_ids';
+  var props = PropertiesService.getScriptProperties();
+  var processed = JSON.parse(props.getProperty(processedKey) || '[]');
+
+  // Search Gmail for OfferGun price drop emails from last 7 days
+  var threads = GmailApp.search(
+    'from:notifications@mg.offergun.com subject:"price dropped" newer_than:7d',
+    0, 50
+  );
+
+  var newProcessed = [];
+
+  for (var t = 0; t < threads.length; t++) {
+    var messages = threads[t].getMessages();
+
+    for (var m = 0; m < messages.length; m++) {
+      var msg     = messages[m];
+      var msgId   = msg.getId();
+
+      // Skip already-processed emails
+      if (processed.indexOf(msgId) !== -1) continue;
+      newProcessed.push(msgId);
+
+      var subject = msg.getSubject();
+      var body    = msg.getPlainBody();
+
+      // Parse subject: "12731 W Eagle Ridge Ln price dropped 2% to $479,000"
+      var subjectMatch = subject.match(/^(.+?)\\s+price\\s+dropped\\s+([\\d.]+)%\\s+to\\s+\\$([\\d,]+)/i);
+      if (!subjectMatch) continue;
+
+      var addr    = subjectMatch[1].trim();
+      var dropPct = parseFloat(subjectMatch[2]);
+      var current = parseFloat(subjectMatch[3].replace(/,/g, ''));
+
+      // Parse offer from body: "your offer of $405,100"
+      var offerMatch = body.match(/your\\s+offer\\s+of\\s+\\$([\\d,]+)/i);
+      var offer = offerMatch ? parseFloat(offerMatch[1].replace(/,/g, '')) : 0;
+
+      // Build URL and push to dashboard
+      var params = {
+        nanu_push : '1',
+        addr      : addr,
+        drop      : dropPct.toString(),
+        current   : current.toString(),
+        offer     : offer.toString(),
+        mid       : msgId
+      };
+
+      var pushUrl = DASHBOARD_URL + '?' + Object.keys(params)
+        .map(function(k){ return k + '=' + encodeURIComponent(params[k]); })
+        .join('&');
+
+      // Fire the push (GET request opens the page with params)
+      try {
+        UrlFetchApp.fetch(pushUrl, { muteHttpExceptions: true });
+        Logger.log('Pushed: ' + addr + ' (' + dropPct + '% drop)');
+      } catch(e) {
+        Logger.log('Error pushing ' + addr + ': ' + e);
+      }
     }
-    el.appendChild(div);
-  });
-  document.getElementById(countId).textContent=hits+'/'+elapsed+' days';
+  }
+
+  // Save processed IDs (keep last 500 to avoid bloat)
+  var allProcessed = processed.concat(newProcessed).slice(-500);
+  props.setProperty(processedKey, JSON.stringify(allProcessed));
+  Logger.log('Done. Processed ' + newProcessed.length + ' new emails.');
+}`;
 }
 
-function renderStreaks(){
-  buildStreak('streak-j-props','sc-j-props',e=>(e.props||0)>=JP);
-  buildStreak('streak-j-buyers','sc-j-buyers',e=>(e.buyers||0)>=JB);
-  buildStreak('streak-grace','sc-grace',e=>(e.offers||0)>=GO);
-}
-
-function renderWeekly(){
-  const dates=getWeekDates();
-  const today=new Date();
-  const tbody=document.getElementById('weekly-body');
-  tbody.innerHTML='';
-  let tp=0,tb=0,to=0,wd=0;
-  dates.forEach((d,i)=>{
-    const isFuture=d>today;
-    const e=sheetData[getKey(d)]||{};
-    const p=e.props||0,b=e.buyers||0,o=e.offers||0;
-    if(!isFuture){tp+=p;tb+=b;to+=o;wd++;}
-    const js=(!isFuture&&(p||b))?statusP(p):'empty';
-    const gs=(!isFuture&&o)?statusO(o):'empty';
-    const dot=(s)=>`<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${s==='green'?'var(--green)':s==='yellow'?'var(--yellow)':s==='red'?'var(--red)':'var(--border)'}"></span>`;
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${DAYS[i]}</td><td>${isFuture?'—':p}</td><td>${isFuture?'—':b}</td><td>${isFuture?'—':o}</td><td>${dot(js)}</td><td>${dot(gs)}</td>`;
-    tbody.appendChild(tr);
-  });
-  const wtP=JP*wd,wtB=JB*wd,wtO=GO*wd;
-  document.getElementById('weekly-totals').innerHTML=`
-    <div class="total-card"><div class="total-label">Properties</div><div class="total-val" style="color:${statusP(wd?Math.round(tp/wd):0)==='green'?'var(--green)':statusP(wd?Math.round(tp/wd):0)==='yellow'?'var(--yellow)':'var(--red)'}">${tp}</div><div class="total-target">target ${wtP}</div></div>
-    <div class="total-card"><div class="total-label">Buyers</div><div class="total-val" style="color:${statusB(wd?Math.round(tb/wd):0)==='green'?'var(--green)':statusB(wd?Math.round(tb/wd):0)==='yellow'?'var(--yellow)':'var(--red)'}">${tb}</div><div class="total-target">target ${wtB}</div></div>
-    <div class="total-card"><div class="total-label">Offers</div><div class="total-val" style="color:${statusO(wd?Math.round(to/wd):0)==='green'?'var(--green)':statusO(wd?Math.round(to/wd):0)==='yellow'?'var(--yellow)':'var(--red)'}">${to}</div><div class="total-target">target ${wtO}</div></div>
-  `;
-}
-
-function renderMonthly(){
-  const now=getAZDate();
-  const monthKey=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-  let tp=0,tb=0,to=0,days=0;
-  Object.keys(sheetData).forEach(k=>{
-    if(k.startsWith(monthKey)){
-      tp+=sheetData[k].props||0;
-      tb+=sheetData[k].buyers||0;
-      to+=sheetData[k].offers||0;
-      days++;
-    }
-  });
-  let wd=0;
-  const d=new Date(now.getFullYear(),now.getMonth(),1);
-  while(d<=now){if(d.getDay()!==0&&d.getDay()!==6)wd++;d.setDate(d.getDate()+1);}
-  const mtP=JP*wd,mtB=JB*wd,mtO=GO*wd;
-  const avgP=Math.round(tp/Math.max(days,1));
-  const avgB=Math.round(tb/Math.max(days,1));
-  const avgO=Math.round(to/Math.max(days,1));
-  document.getElementById('monthly-grid').innerHTML=`
-    <div class="monthly-card"><div class="monthly-label">Properties this month</div><div class="monthly-val" style="color:${statusP(avgP)==='green'?'var(--green)':statusP(avgP)==='yellow'?'var(--yellow)':'var(--red)'}">${tp}</div><div class="monthly-target">target ${mtP} · avg ${avgP}/day</div><div class="bar-track"><div class="bar-fill ${statusP(avgP)}" style="width:${Math.min(100,Math.round(tp/Math.max(mtP,1)*100))}%"></div></div><span class="kpi-badge ${statusP(avgP)}" style="margin-top:6px;display:inline-block">${Math.min(100,Math.round(tp/Math.max(mtP,1)*100))}% of target</span></div>
-    <div class="monthly-card"><div class="monthly-label">Buyers this month</div><div class="monthly-val" style="color:${statusB(avgB)==='green'?'var(--green)':statusB(avgB)==='yellow'?'var(--yellow)':'var(--red)'}">${tb}</div><div class="monthly-target">target ${mtB} · avg ${avgB}/day</div><div class="bar-track"><div class="bar-fill ${statusB(avgB)}" style="width:${Math.min(100,Math.round(tb/Math.max(mtB,1)*100))}%"></div></div><span class="kpi-badge ${statusB(avgB)}" style="margin-top:6px;display:inline-block">${Math.min(100,Math.round(tb/Math.max(mtB,1)*100))}% of target</span></div>
-    <div class="monthly-card"><div class="monthly-label">Offers this month</div><div class="monthly-val" style="color:${statusO(avgO)==='green'?'var(--green)':statusO(avgO)==='yellow'?'var(--yellow)':'var(--red)'}">${to}</div><div class="monthly-target">target ${mtO} · avg ${avgO}/day</div><div class="bar-track"><div class="bar-fill ${statusO(avgO)}" style="width:${Math.min(100,Math.round(to/Math.max(mtO,1)*100))}%"></div></div><span class="kpi-badge ${statusO(avgO)}" style="margin-top:6px;display:inline-block">${Math.min(100,Math.round(to/Math.max(mtO,1)*100))}% of target</span></div>
-    <div class="monthly-card"><div class="monthly-label">Days logged</div><div class="monthly-val">${days}</div><div class="monthly-target">of ${wd} workdays this month</div></div>
-  `;
-}
-
-function renderAll(){
-  renderYesterday();
-  renderToday();
-  renderStreaks();
-  renderWeekly();
-  renderMonthly();
-}
-
-function switchTab(tab){
-  ['daily','weekly','monthly'].forEach(t=>{
-    document.getElementById('view-'+t).style.display=t===tab?'':'none';
-  });
-  document.querySelectorAll('.tab').forEach((el,i)=>{
-    el.classList.toggle('active',['daily','weekly','monthly'][i]===tab);
+function copyScript(){
+  const s=buildScript();
+  navigator.clipboard.writeText(s).then(()=>{
+    const btn=document.querySelector('.copy-btn');
+    btn.textContent='Copied!';
+    btn.style.color='#4ec9a0';
+    setTimeout(()=>{btn.textContent='Copy';btn.style.color='';},2000);
   });
 }
 
-const now = new Date();
-document.getElementById('today-label').textContent = getAZDate().toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'});
-loadData();
-setInterval(loadData, 5*60*1000);
+function renderScript(){
+  const s=buildScript();
+  const pre=document.getElementById('scriptPre');
+  pre.textContent=s;
+}
+
+/* ── GOOGLE SHEETS ── */
+function saveSheets(){
+  const url=document.getElementById('sheetsUrl').value.trim();
+  if(!url) return;
+  localStorage.setItem(SHEETS_KEY,url);
+  doRefresh();
+}
+function doRefresh(){
+  const url=document.getElementById('sheetsUrl').value.trim();
+  const lbl=document.getElementById('gsStatus');
+  const btn=document.getElementById('refreshBtn');
+  if(!url){lbl.textContent='Paste your Google Sheets CSV URL below.';return;}
+  btn.innerHTML='<span class="spin"></span>';
+  fetch(url)
+    .then(r=>r.text())
+    .then(csv=>{btn.innerHTML='↻ Sync';lbl.textContent='Last synced: '+new Date().toLocaleTimeString();parseCSV(csv);})
+    .catch(()=>{btn.innerHTML='↻ Sync';lbl.textContent='Could not reach Google Sheets — check URL.';});
+}
+function parseCSV(csv){
+  const lines = csv.trim().split('\n').slice(1).filter(Boolean);
+
+  // Aggregate raw rows by date — each row is a single activity entry (1 per cell)
+  // Columns: Date, Properties Added (Joely), Buyers Added (Joely), Offers Sent (Grace)
+  const byDate = {};
+  lines.forEach(line => {
+    const c = line.split(',');
+    const raw = (c[0]||'').trim();
+    if (!raw) return;
+    // Normalize date to YYYY-MM-DD for consistent sorting
+    let dateKey = raw;
+    try {
+      const d = new Date(raw);
+      if (!isNaN(d)) dateKey = d.toISOString().slice(0,10);
+    } catch(e){}
+    if (!byDate[dateKey]) byDate[dateKey] = {jp:0,jb:0,go:0,date:raw};
+    byDate[dateKey].jp += parseInt(c[1])||0;
+    byDate[dateKey].jb += parseInt(c[2])||0;
+    byDate[dateKey].go += parseInt(c[3])||0;
+  });
+
+  // Sort dates descending, take last 7 weekdays
+  const sorted = Object.keys(byDate).sort().reverse();
+  const recent = sorted.slice(0,7).reverse(); // oldest first for display
+
+  // Today's date key
+  const todayKey = new Date().toISOString().slice(0,10);
+
+  // Find today or most recent entry for live KPI cards
+  const todayData = byDate[todayKey] || byDate[sorted[0]] || {jp:0,jb:0,go:0};
+  const jp=todayData.jp, jb=todayData.jb, go=todayData.go;
+
+  // Update KPI cards
+  document.getElementById('jPropVal').textContent = jp+' / 25';
+  document.getElementById('jBuyVal').textContent  = jb+' / 25';
+  document.getElementById('gOfferVal').textContent= go+' / 20';
+  document.getElementById('gCompVal').textContent = go>0 ? Math.round((go/25)*100)+'%' : '— / 100%';
+  document.getElementById('jPropBar').style.width  = pct(jp,25);
+  document.getElementById('jBuyBar').style.width   = pct(jb,25);
+  document.getElementById('gOfferBar').style.width = pct(go,20);
+  document.getElementById('gCompBar').style.width  = pct(go>0?Math.round((go/25)*100):0,100);
+  document.getElementById('jPropBar').className  = 'bar-fill '+(jp>=25?'bar-green':'bar-blue');
+  document.getElementById('gOfferBar').className = 'bar-fill '+(go>=20?'bar-green':'bar-amber');
+
+  const jOk=jp>=25&&jb>=25, gOk=go>=20;
+  document.getElementById('joelyTag').innerHTML = jOk?'<span class="on-track">on track ✓</span>':'<span class="not-logged">check in</span>';
+  document.getElementById('graceTag').innerHTML  = gOk?'<span class="on-track">on track ✓</span>':'<span class="not-logged">check in</span>';
+  document.getElementById('chipJoely').className = 'chip '+(jOk?'c-green':'c-amber');
+  document.getElementById('chipJoely').innerHTML = '<div class="chip-dot"></div>Joely '+(jOk?'✓':'—');
+  document.getElementById('chipGrace').className = 'chip '+(gOk?'c-green':'c-amber');
+  document.getElementById('chipGrace').innerHTML = '<div class="chip-dot"></div>Grace '+(gOk?'✓':'—');
+
+  // Build weekly report table — last 7 days with data
+  const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  let tbody = '';
+  recent.forEach(key => {
+    const d  = byDate[key];
+    const dn = dayNames[new Date(key).getDay()] || key;
+    const displayDate = d.date || key;
+    const jOkRow = d.jp>=25&&d.jb>=25, gOkRow = d.go>=20;
+    const isToday = key === todayKey;
+    const rowStyle = isToday ? 'background:#f0faf4;' : '';
+    const st = (jOkRow&&gOkRow)
+      ? '<span style="font-size:10px;font-family:var(--mono);color:var(--green);font-weight:500">on track ✓</span>'
+      : '<span style="font-size:10px;font-family:var(--mono);color:var(--amber)">check in</span>';
+    tbody += `<tr style="${rowStyle}">
+      <td style="font-size:12px;font-family:var(--mono);color:var(--text2)">${dn} ${displayDate}${isToday?' <span style="font-size:9px;background:var(--green-bg);color:var(--green);border-radius:3px;padding:1px 4px;font-family:var(--mono)">today</span>':''}</td>
+      <td style="color:${d.jp>=25?'var(--green)':'var(--text2)'}">${d.jp}/25</td>
+      <td style="color:${d.jb>=25?'var(--green)':'var(--text2)'}">${d.jb}/25</td>
+      <td style="color:${d.go>=20?'var(--green)':'var(--text2)'}">${d.go}/20</td>
+      <td style="color:${d.go>=20?'var(--green)':'var(--text2)'}">${d.go>0?Math.round((d.go/25)*100)+'%':'—'}</td>
+      <td>${st}</td>
+    </tr>`;
+  });
+
+  document.getElementById('weeklyBody').innerHTML = tbody ||
+    '<tr><td colspan="6" style="text-align:center;padding:24px;font-size:12px;color:var(--text3);font-family:var(--mono)">No rows found — check your sheet URL</td></tr>';
+
+  // Build streak data from last 5 weekdays
+  const weekdays = sorted.filter(k => { const d=new Date(k).getDay(); return d>=1&&d<=5; }).slice(0,5).reverse();
+  const data = { jp: weekdays.map(k=>byDate[k].jp), jb: weekdays.map(k=>byDate[k].jb), go: weekdays.map(k=>byDate[k].go) };
+  renderStreaks(data);
+}
+function renderStreaks(data){
+  const labels=['Joely · properties','Joely · buyers','Grace · offers'];
+  const sets=[data.jp,data.jb,data.go];
+  const targets=[25,25,20];
+  const days=['M','T','W','T','F'];
+  document.getElementById('streakRows').innerHTML=labels.map((lbl,li)=>`
+    <div class="streak-row">
+      <div class="streak-lbl">${lbl}</div>
+      <div class="streak-days">${days.map((_,di)=>{
+        const v=sets[li][di];
+        const cls=v===undefined?'':(v>=targets[li]?'hit':'miss');
+        return '<div class="s-day '+cls+'">'+days[di]+'</div>';
+      }).join('')}</div>
+    </div>`).join('');
+}
+function exportCSV(){
+  let csv='Day,Joely Props,Joely Buyers,Grace Offers,Grace Comp,Status\n';
+  [...document.querySelectorAll('#weeklyBody tr')].forEach(r=>{
+    const cells=[...r.querySelectorAll('td')];
+    if(cells.length>=5) csv+=cells.map(c=>c.textContent.trim()).join(',')+'\n';
+  });
+  const a=document.createElement('a');
+  a.href='data:text/csv,'+encodeURIComponent(csv);
+  a.download='nanu-weekly-'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+}
+function setPeriod(p,btn){
+  document.querySelectorAll('.p-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+/* ── CLOCK ── */
+function tick(){ document.getElementById('clock').textContent=new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}); }
+
+/* ── INIT ── */
+function init(){
+  hydrate();
+  checkUrlParams();
+  render();
+  renderStreaks({jp:[],jb:[],go:[],gc:[]});
+  setTier('all');
+  renderScript();
+  tick(); setInterval(tick,30000);
+  doRefresh();  // auto-sync on every load
+}
+init();
 </script>
 </body>
 </html>
