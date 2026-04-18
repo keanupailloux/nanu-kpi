@@ -5,27 +5,29 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NANU REI — Command Center</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#f7f7f5;--white:#fff;--border:#e8e8e4;--border2:#d0d0c8;
-  --text:#181816;--text2:#68685f;--text3:#b0b0a6;
-  --red:#c93f3f;--red-bg:#fdf2f2;--red-bd:#f5c4c4;
-  --amber:#b86e18;--amber-bg:#fdf6ee;--amber-bd:#f0d0a0;
-  --blue:#2860c4;--blue-bg:#f0f4fd;--blue-bd:#b8ccf4;
-  --green:#28845a;--green-bg:#f0faf4;--green-bd:#a8dfc0;
-  --teal:#0e7a8a;--teal-bg:#f0f9fa;--teal-bd:#a0dce4;
-  --gray-bg:#f2f2ef;
-  --r:6px;--r2:8px;
-  --font:'IBM Plex Sans',sans-serif;
-  --mono:'IBM Plex Mono',monospace;
+  --bg:#f9f9f8;--white:#ffffff;--border:#e5e5e3;--border2:#d4d4d0;
+  --text:#1a1a18;--text2:#6b6b62;--text3:#a8a89e;
+  --red:#cc3333;--red-bg:#fef2f2;--red-bd:#fecaca;
+  --amber:#b45309;--amber-bg:#fffbeb;--amber-bd:#fde68a;
+  --blue:#2563eb;--blue-bg:#eff6ff;--blue-bd:#bfdbfe;
+  --green:#16a34a;--green-bg:#f0fdf4;--green-bd:#bbf7d0;
+  --teal:#0e7490;--teal-bg:#ecfeff;--teal-bd:#a5f3fc;
+  --gray-bg:#f3f4f6;
+  --r:8px;--r2:10px;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 6px rgba(0,0,0,.07),0 2px 4px rgba(0,0,0,.05);
+  --font:'Geist',system-ui,sans-serif;
+  --mono:'Geist Mono',monospace;
 }
-body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;letter-spacing:-.01em}
 
 /* TOP BAR */
-.topbar{height:50px;background:var(--white);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:14px;position:sticky;top:0;z-index:50}
-.logo{font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:.14em;color:var(--text);flex-shrink:0}
+.topbar{height:52px;background:var(--white);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:14px;position:sticky;top:0;z-index:50;box-shadow:var(--shadow)}
+.logo{font-family:var(--font);font-size:13px;font-weight:700;letter-spacing:-.02em;color:var(--text);flex-shrink:0}
 .sep{width:1px;height:18px;background:var(--border);flex-shrink:0}
 .chips{display:flex;gap:6px;flex:1}
 .chip{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:4px;font-size:11px;font-family:var(--mono);border:1px solid transparent;white-space:nowrap}
@@ -48,7 +50,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .page{padding:24px;max-width:1140px}
 .section{display:none}.section.active{display:block}
 .page-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;gap:12px}
-.page-title{font-size:18px;font-weight:600;color:var(--text)}
+.page-title{font-size:20px;font-weight:700;color:var(--text);letter-spacing:-.03em}
 .page-sub{font-size:12px;color:var(--text3);font-family:var(--mono);margin-top:3px}
 
 /* SYNC STATUS BAR */
@@ -63,9 +65,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 
 /* STATS */
 .stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
-.stat{background:var(--white);border:1px solid var(--border);border-radius:var(--r2);padding:14px 16px}
+.stat{background:var(--white);border:1px solid var(--border);border-radius:var(--r2);padding:16px 18px;box-shadow:var(--shadow);transition:box-shadow .15s}
 .stat-label{font-size:11px;color:var(--text3);margin-bottom:6px;font-family:var(--mono)}
-.stat-val{font-size:26px;font-weight:600;line-height:1;font-family:var(--mono);color:var(--text)}
+.stat-val{font-size:32px;font-weight:700;line-height:1;font-family:var(--mono);color:var(--text);letter-spacing:-.02em}
 .stat-val.red{color:var(--red)}.stat-val.amber{color:var(--amber)}.stat-val.blue{color:var(--blue)}
 
 /* TIER TABS */
@@ -82,14 +84,14 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .ttab.on.t-watch .tc{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-bd)}
 
 /* CARD & TABLE */
-.card{background:var(--white);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden}
+.card{background:var(--white);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;box-shadow:var(--shadow)}
 .tbl-wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse}
-thead th{font-size:10px;font-weight:500;font-family:var(--mono);color:var(--text3);text-align:left;padding:9px 14px;border-bottom:1px solid var(--border);background:#fafaf8;white-space:nowrap}
+thead th{font-size:10px;font-weight:600;font-family:var(--mono);color:var(--text3);text-align:left;padding:10px 16px;border-bottom:1px solid var(--border);background:#fafaf9;white-space:nowrap;letter-spacing:.04em;text-transform:uppercase}
 tbody tr{border-bottom:1px solid var(--border);transition:background .08s}
 tbody tr:last-child{border-bottom:none}
 tbody tr:hover{background:#fafaf8}
-tbody td{padding:11px 14px;font-size:13px;color:var(--text2);vertical-align:middle}
+tbody td{padding:13px 16px;font-size:13px;color:var(--text2);vertical-align:middle;line-height:1.4}
 td.addr{color:var(--text);font-weight:500;font-size:13px}
 td.mono{font-family:var(--mono);font-size:12px}
 
@@ -111,7 +113,7 @@ td.mono{font-family:var(--mono);font-size:12px}
 
 /* BUTTONS */
 .btn{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;border-radius:var(--r);font-size:12px;font-family:var(--font);font-weight:500;cursor:pointer;transition:all .1s;border:1px solid transparent}
-.btn-dark{background:var(--text);border-color:var(--text);color:#fff}.btn-dark:hover{background:#2a2a28}
+.btn-dark{background:var(--text);border-color:var(--text);color:#fff;font-weight:500;letter-spacing:-.01em}.btn-dark:hover{background:#2d2d2b;box-shadow:var(--shadow-md)}
 .btn-ghost{background:var(--white);border-color:var(--border2);color:var(--text2)}.btn-ghost:hover{border-color:var(--text3);color:var(--text)}
 .btn-red{background:var(--red-bg);border-color:var(--red-bd);color:var(--red)}
 .btn-sm{padding:4px 10px;font-size:11px}
@@ -135,7 +137,7 @@ td.mono{font-family:var(--mono);font-size:12px}
 
 /* VA SECTION */
 .va-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
-.va-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden}
+.va-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;box-shadow:var(--shadow)}
 .va-head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
 .va-av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;font-family:var(--mono)}
 .va-av.jo{background:var(--blue-bg);color:var(--blue)}
@@ -154,7 +156,7 @@ td.mono{font-family:var(--mono);font-size:12px}
 .on-track{font-size:10px;font-family:var(--mono);color:var(--green);font-weight:500}
 
 /* STREAK */
-.streak-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r2);padding:16px 18px;margin-bottom:12px}
+.streak-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r2);padding:18px 20px;margin-bottom:12px;box-shadow:var(--shadow)}
 .streak-head{font-size:10px;font-weight:500;font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:14px}
 .streak-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
 .streak-row:last-child{margin-bottom:0}
@@ -198,9 +200,9 @@ td.mono{font-family:var(--mono);font-size:12px}
   <div class="logo">NANU REI</div>
   <div class="sep"></div>
   <div class="chips">
-    <div class="chip c-red"><div class="chip-dot"></div><span id="chipHot">0</span> hot</div>
-    <div class="chip c-amber"><div class="chip-dot"></div><span id="chipWarm">0</span> warm</div>
-    <div class="chip c-blue"><div class="chip-dot"></div><span id="chipWatch">0</span> watch</div>
+    <div class="chip c-red"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c0 0-4 4-4 9a4 4 0 008 0c0-1.5-.5-3-1.5-4.5C14 8 14 10 13 11c-.5-1.5-1-4-1-9z"/></svg><span id="chipHot">0</span> hot</div>
+    <div class="chip c-amber"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="4"/></svg><span id="chipWarm">0</span> warm</div>
+    <div class="chip c-blue"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><span id="chipWatch">0</span> watch</div>
     <div class="chip c-green" id="chipJoely"><div class="chip-dot"></div>Joely</div>
     <div class="chip c-green" id="chipGrace"><div class="chip-dot"></div>Grace</div>
   </div>
@@ -238,20 +240,30 @@ td.mono{font-family:var(--mono);font-size:12px}
       <div class="sync-dot live" id="syncDot"></div>
       <span class="sync-text" id="syncText">Listening for OfferGun email data from Google Apps Script</span>
       <span class="sync-time" id="syncTime" style="display:none"></span>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-left:8px" id="nextRefresh"></span>
     </div>
 
     <!-- STATS -->
     <div class="stat-row">
       <div class="stat" style="border-top:3px solid var(--red)">
-        <div class="stat-label">Hot — ≥10% drop</div>
+        <div class="stat-label" style="display:flex;align-items:center;gap:5px">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="var(--red)"><path d="M12 2c0 0-4 4-4 9a4 4 0 008 0c0-1.5-.5-3-1.5-4.5C14 8 14 10 13 11c-.5-1.5-1-4-1-9z"/><path d="M8.5 13.5C7 15 6 17 6 19a6 6 0 0012 0c0-2-.8-3.8-2-5-.3 1.5-1 2.8-2 3.5-.2-1.5-.5-3.5-.5-4z" opacity=".7"/></svg>
+          Hot — ≥10% drop
+        </div>
         <div class="stat-val red" id="sHot">0</div>
       </div>
       <div class="stat" style="border-top:3px solid var(--amber)">
-        <div class="stat-label">Warm — 5 to 9% drop</div>
+        <div class="stat-label" style="display:flex;align-items:center;gap:5px">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><path d="M12 3v1m0 16v1M4.22 4.22l.707.707m12.728 12.728.707.707M1 12h1m20 0h1M4.22 19.78l.707-.707M18.95 5.05l.707-.707"/><circle cx="12" cy="12" r="4"/></svg>
+          Warm — 5 to 9% drop
+        </div>
         <div class="stat-val amber" id="sWarm">0</div>
       </div>
       <div class="stat" style="border-top:3px solid var(--blue)">
-        <div class="stat-label">Watch — under 5%</div>
+        <div class="stat-label" style="display:flex;align-items:center;gap:5px">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          Watch — under 5%
+        </div>
         <div class="stat-val blue" id="sWatch">0</div>
       </div>
     </div>
@@ -259,9 +271,18 @@ td.mono{font-family:var(--mono);font-size:12px}
     <!-- TIER FILTER -->
     <div class="tier-row">
       <div class="ttab t-all on" id="tt-all" onclick="setTier('all')">All <span class="tc" id="tc-all">0</span></div>
-      <div class="ttab t-hot" id="tt-hot" onclick="setTier('hot')">Hot <span class="tc" id="tc-hot">0</span></div>
-      <div class="ttab t-warm" id="tt-warm" onclick="setTier('warm')">Warm <span class="tc" id="tc-warm">0</span></div>
-      <div class="ttab t-watch" id="tt-watch" onclick="setTier('watch')">Watch <span class="tc" id="tc-watch">0</span></div>
+      <div class="ttab t-hot" id="tt-hot" onclick="setTier('hot')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0"><path d="M12 2c0 0-4 4-4 9a4 4 0 008 0c0-1.5-.5-3-1.5-4.5C14 8 14 10 13 11c-.5-1.5-1-4-1-9z"/><path d="M8.5 13.5C7 15 6 17 6 19a6 6 0 0012 0c0-2-.8-3.8-2-5-.3 1.5-1 2.8-2 3.5-.2-1.5-.5-3.5-.5-4z" opacity=".7"/></svg>
+        Hot <span class="tc" id="tc-hot">0</span>
+      </div>
+      <div class="ttab t-warm" id="tt-warm" onclick="setTier('warm')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><path d="M12 3v1m0 16v1M4.22 4.22l.707.707m12.728 12.728.707.707M1 12h1m20 0h1M4.22 19.78l.707-.707M18.95 5.05l.707-.707"/><circle cx="12" cy="12" r="4"/></svg>
+        Warm <span class="tc" id="tc-warm">0</span>
+      </div>
+      <div class="ttab t-watch" id="tt-watch" onclick="setTier('watch')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        Watch <span class="tc" id="tc-watch">0</span>
+      </div>
     </div>
 
     <!-- TABLE -->
@@ -644,6 +665,7 @@ function fetchWebApp() {
     persist();
     lbl.textContent = 'Last synced: ' + new Date().toLocaleTimeString() + ' — ' + rows.length + ' properties loaded';
     document.getElementById('syncDot').className = 'sync-dot live';
+    _lastRefresh = Date.now();
     render();
   };
 
@@ -682,7 +704,11 @@ function renderTable(){
     const ds=abs!==null?'-'+abs.toFixed(1)+'%':'—';
     const dc={hot:'d-hot',warm:'d-warm',watch:'d-watch'}[t];
     const pc={hot:'tp-hot',warm:'tp-warm',watch:'tp-watch'}[t];
-    const pl={hot:'HOT',warm:'WARM',watch:'WATCH'}[t];
+    const pl={
+      hot:'<svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" style="margin-right:2px;vertical-align:middle"><path d="M12 2c0 0-4 4-4 9a4 4 0 008 0c0-1.5-.5-3-1.5-4.5C14 8 14 10 13 11c-.5-1.5-1-4-1-9z"/></svg>HOT',
+      warm:'<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:2px;vertical-align:middle"><circle cx="12" cy="12" r="4"/></svg>WARM',
+      watch:'<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:2px;vertical-align:middle"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>WATCH'
+    }[t];
     const gap=d.current&&d.offer?d.current-d.offer:null;
     const gapHtml=gap!==null
       ?`<span style="font-family:var(--mono);font-size:11px;color:${gap<=0?'var(--green)':'var(--text3)'}">
@@ -994,7 +1020,16 @@ function saveWebApp(){
 }
 
 /* ── CLOCK ── */
-function tick(){ document.getElementById('clock').textContent=new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}); }
+let _lastRefresh = Date.now();
+function tick(){
+  document.getElementById('clock').textContent=new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  const elapsed = Math.floor((Date.now() - _lastRefresh) / 1000);
+  const remaining = Math.max(0, 300 - elapsed);
+  const mm = Math.floor(remaining/60);
+  const ss = String(remaining%60).padStart(2,'0');
+  const el = document.getElementById('nextRefresh');
+  if (el) el.textContent = 'next refresh ' + mm + ':' + ss;
+}
 
 /* ── INIT ── */
 function init(){
@@ -1004,9 +1039,24 @@ function init(){
   renderStreaks({jp:[],jb:[],go:[],gc:[]});
   setTier('all');
   renderScript();
-  tick(); setInterval(tick,30000);
-  doRefresh();      // sync KPI sheet
-  fetchWebApp();    // sync hot sheet from Web App
+  tick(); setInterval(tick,1000);
+  doRefresh();      // sync KPI sheet on load
+  fetchWebApp();    // sync hot sheet on load
+
+  // Auto-refresh every 5 minutes — no force reload needed
+  setInterval(function(){
+    doRefresh();
+    fetchWebApp();
+    document.getElementById('syncText').textContent = 'Auto-refreshing...';
+  }, 5 * 60 * 1000);
+
+  // Auto-refresh every 30 seconds if tab is visible — keeps data fresh
+  document.addEventListener('visibilitychange', function(){
+    if (!document.hidden) {
+      fetchWebApp();
+      doRefresh();
+    }
+  });
 }
 init();
 </script>
