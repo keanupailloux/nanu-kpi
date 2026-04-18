@@ -312,7 +312,21 @@ td.mono{font-family:var(--mono);font-size:12px}
 
         <div class="setup-step">
           <div class="sn">6</div>
-          <div>Done. The script will now wake up every 5 minutes, find new OfferGun price drop emails, and push them directly to this dashboard. You will never touch it again.</div>
+          <div>Click <strong>Deploy</strong> → <strong>New deployment</strong> → type: <strong>Web App</strong> → Execute as: <strong>Me</strong> → Who has access: <strong>Anyone</strong> → Deploy. Copy the Web App URL it gives you.</div>
+        </div>
+
+        <div class="setup-step">
+          <div class="sn">7</div>
+          <div>Paste your Web App URL below and click Save. The hot sheet will now auto-populate every time you open this page.</div>
+        </div>
+
+        <div style="margin-top:12px;">
+          <div class="form-lbl" style="font-family:var(--mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px">Web App URL</div>
+          <div style="display:flex;gap:8px;">
+            <input class="form-input" id="webAppUrl" placeholder="https://script.google.com/macros/s/…/exec" style="flex:1">
+            <button class="btn btn-dark" onclick="saveWebApp()">Save</button>
+          </div>
+          <div id="webAppStatus" style="font-size:11px;color:var(--text3);margin-top:6px;font-family:var(--mono)"></div>
         </div>
 
       </div>
@@ -406,7 +420,8 @@ td.mono{font-family:var(--mono);font-size:12px}
 /* ── STORAGE ── */
 const DEALS_KEY  = 'nanu_deals_v6';
 const SHEETS_DEFAULT = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTTseyrdiHuS0KYj0n9Cf2ge0XIQRJmThn4wYX6475tupOAW3VeyTpyhROzVg3iab3fyMexnccadZ1e/pub?gid=0&single=true&output=csv';
-const SHEETS_KEY = 'nanu_sheets_v5';
+const SHEETS_KEY   = 'nanu_sheets_v5';
+const WEBAPP_KEY   = 'nanu_webapp_v1';
 let deals = [];
 let currentTier = 'all';
 
@@ -417,6 +432,8 @@ function hydrate() {
   const u = localStorage.getItem(SHEETS_KEY) || SHEETS_DEFAULT;
   document.getElementById('sheetsUrl').value = u;
   if (!localStorage.getItem(SHEETS_KEY)) localStorage.setItem(SHEETS_KEY, SHEETS_DEFAULT);
+  const wu = localStorage.getItem(WEBAPP_KEY);
+  if (wu) document.getElementById('webAppUrl').value = wu;
 }
 function pruneOld() {
   const cut = Date.now() - 7*24*60*60*1000;
@@ -522,16 +539,113 @@ function render(){
   renderTable();
 }
 
+/* ── COMPOSITE SCORE ──────────────────────────────────────────────
+   Weights (must sum to 100):
+     Gap to offer  40% — within $20k scores high; below offer = max
+     Drop %        30% — single-email drop
+     Reductions    20% — cumulative reduction count
+     Days on mkt   10% — longer sitting = more desperate
+── */
+function compositeScore(d) {
+  // GAP SCORE (40pts) — how close current price is to offer
+  let gapScore = 0;
+  if (d.offer && d.current) {
+    const gap = d.current - d.offer; // negative = below offer
+    if (gap <= 0)        gapScore = 40;  // below offer — best possible
+    else if (gap <= 10000)  gapScore = 38;
+    else if (gap <= 20000)  gapScore = 32;
+    else if (gap <= 40000)  gapScore = 20;
+    else if (gap <= 75000)  gapScore = 10;
+    else                    gapScore = 2;
+  }
+
+  // DROP SCORE (30pts) — single email drop %
+  const drop = Math.abs(d.drop || 0);
+  let dropScore = 0;
+  if      (drop >= 20) dropScore = 30;
+  else if (drop >= 15) dropScore = 26;
+  else if (drop >= 10) dropScore = 20;
+  else if (drop >= 7)  dropScore = 14;
+  else if (drop >= 5)  dropScore = 8;
+  else                 dropScore = Math.round(drop * 1.2);
+
+  // REDUCTIONS SCORE (20pts) — cumulative count
+  const reds = d.reductions || 1;
+  let redScore = 0;
+  if      (reds >= 8) redScore = 20;
+  else if (reds >= 5) redScore = 16;
+  else if (reds >= 3) redScore = 11;
+  else if (reds >= 2) redScore = 6;
+  else                redScore = 2;
+
+  // DAYS SCORE (10pts) — days since first seen
+  let dayScore = 0;
+  if (d.firstSeen) {
+    const days = Math.floor((Date.now() - new Date(d.firstSeen)) / (1000*60*60*24));
+    if      (days >= 90) dayScore = 10;
+    else if (days >= 60) dayScore = 8;
+    else if (days >= 30) dayScore = 6;
+    else if (days >= 14) dayScore = 4;
+    else                 dayScore = 2;
+  }
+
+  return gapScore + dropScore + redScore + dayScore;
+}
+
+/* ── WEB APP FETCH ── */
+function fetchWebApp() {
+  const url = localStorage.getItem(WEBAPP_KEY);
+  if (!url) return;
+  const lbl = document.getElementById('syncText');
+  lbl.textContent = 'Fetching from OfferGun email database...';
+  fetch(url)
+    .then(r => r.json())
+    .then(rows => {
+      if (!Array.isArray(rows) || !rows.length) {
+        lbl.textContent = 'No properties yet — waiting for OfferGun price drop emails';
+        return;
+      }
+      // Merge with local deals — dedupe by address
+      rows.forEach(row => {
+        const exists = deals.find(d => d.addr && d.addr.toLowerCase() === row.addr.toLowerCase());
+        if (!exists) {
+          deals.push({
+            addr       : row.addr,
+            drop       : -(row.dropPct || 0),
+            current    : row.current,
+            offer      : row.offer,
+            original   : row.offer > 0 ? Math.round(row.current / (1 - (row.dropPct||0)/100)) : row.current,
+            agent      : row.agent,
+            reductions : row.reductions || 1,
+            firstSeen  : row.firstSeen,
+            mid        : row.addr,
+            ts         : row.firstSeen ? new Date(row.firstSeen).getTime() : Date.now()
+          });
+        } else {
+          // Update existing with latest data
+          exists.drop       = -(row.dropPct || 0);
+          exists.current    = row.current;
+          exists.reductions = row.reductions || exists.reductions;
+        }
+      });
+      persist();
+      lbl.textContent = 'Last synced from OfferGun: ' + new Date().toLocaleTimeString();
+      document.getElementById('syncDot').className = 'sync-dot live';
+      render();
+    })
+    .catch(() => {
+      lbl.textContent = 'Could not reach Web App — check URL in setup guide';
+      document.getElementById('syncDot').className = 'sync-dot waiting';
+    });
+}
+
 function renderTable(){
   const wrap=document.getElementById('tableWrap');
   let list=[...deals];
   if(currentTier!=='all') list=list.filter(d=>tier(d.drop)===currentTier);
-  list.sort((a,b)=>{
-    const o={hot:0,warm:1,watch:2};
-    const ta=o[tier(a.drop)],tb=o[tier(b.drop)];
-    if(ta!==tb) return ta-tb;
-    return Math.abs(b.drop||0)-Math.abs(a.drop||0);
-  });
+
+  // Sort by composite score descending — highest priority first
+  list.sort((a,b) => compositeScore(b) - compositeScore(a));
 
   if(!list.length){
     const msgs={
@@ -565,14 +679,22 @@ function renderTable(){
       :'—';
     const age=Math.floor((Date.now()-d.ts)/(1000*60*60*24));
     const ageStr=age===0?'today':age===1?'1d ago':age+'d ago';
+    const score = compositeScore(d);
+    const scoreColor = score>=70?'var(--red)':score>=50?'var(--amber)':'var(--text3)';
+    const redStr = d.reductions > 1 ? d.reductions+'×' : '1×';
     return `<tr>
-      <td><span class="tp ${pc}">${pl}</span></td>
+      <td>
+        <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start">
+          <span class="tp ${pc}">${pl}</span>
+          <span style="font-family:var(--mono);font-size:10px;font-weight:600;color:${scoreColor}">${score}</span>
+        </div>
+      </td>
       <td class="addr">${d.addr}</td>
-      <td class="mono">${fmt(d.original)}</td>
       <td class="mono">${fmt(d.offer)}</td>
       <td class="mono">${fmt(d.current)}</td>
       <td><span class="delta ${dc}">${ds}</span></td>
       <td>${gapHtml}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${redStr}</td>
       <td style="color:var(--text2);font-size:13px">${d.agent||'—'}</td>
       <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${ageStr}</td>
       <td style="text-align:right">
@@ -585,8 +707,8 @@ function renderTable(){
 
   wrap.innerHTML=`<div class="tbl-wrap"><table>
     <thead><tr>
-      <th>Tier</th><th>Address</th><th>Original list</th><th>Our offer</th>
-      <th>Current price</th><th>Drop</th><th>Gap to offer</th><th>Agent</th><th>Received</th><th></th>
+      <th>Score</th><th>Address</th><th>Our offer</th>
+      <th>Current price</th><th>Drop</th><th>Gap to offer</th><th>Drops</th><th>Agent</th><th>Received</th><th></th>
     </tr></thead>
     <tbody>${rows}</tbody>
   </table></div>`;
@@ -849,6 +971,16 @@ function setPeriod(p,btn){
   btn.classList.add('active');
 }
 
+/* ── WEB APP SETUP ── */
+function saveWebApp(){
+  const url = document.getElementById('webAppUrl').value.trim();
+  if (!url) return;
+  localStorage.setItem(WEBAPP_KEY, url);
+  document.getElementById('webAppStatus').textContent = 'Saved. Fetching hot sheet data...';
+  document.getElementById('webAppStatus').style.color = 'var(--green)';
+  fetchWebApp();
+}
+
 /* ── CLOCK ── */
 function tick(){ document.getElementById('clock').textContent=new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}); }
 
@@ -861,7 +993,8 @@ function init(){
   setTier('all');
   renderScript();
   tick(); setInterval(tick,30000);
-  doRefresh();  // auto-sync on every load
+  doRefresh();      // sync KPI sheet
+  fetchWebApp();    // sync hot sheet from Web App
 }
 init();
 </script>
