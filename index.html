@@ -598,45 +598,57 @@ function fetchWebApp() {
   if (!url) return;
   const lbl = document.getElementById('syncText');
   lbl.textContent = 'Fetching from OfferGun email database...';
-  fetch(url)
-    .then(r => r.json())
-    .then(rows => {
-      if (!Array.isArray(rows) || !rows.length) {
-        lbl.textContent = 'No properties yet — waiting for OfferGun price drop emails';
-        return;
-      }
-      // Merge with local deals — dedupe by address
-      rows.forEach(row => {
-        const exists = deals.find(d => d.addr && d.addr.toLowerCase() === row.addr.toLowerCase());
-        if (!exists) {
-          deals.push({
-            addr       : row.addr,
-            drop       : -(row.dropPct || 0),
-            current    : row.current,
-            offer      : row.offer,
-            original   : row.offer > 0 ? Math.round(row.current / (1 - (row.dropPct||0)/100)) : row.current,
-            agent      : row.agent,
-            reductions : row.reductions || 1,
-            firstSeen  : row.firstSeen,
-            mid        : row.addr,
-            ts         : row.firstSeen ? new Date(row.firstSeen).getTime() : Date.now()
-          });
-        } else {
-          // Update existing with latest data
-          exists.drop       = -(row.dropPct || 0);
-          exists.current    = row.current;
-          exists.reductions = row.reductions || exists.reductions;
-        }
-      });
-      persist();
-      lbl.textContent = 'Last synced from OfferGun: ' + new Date().toLocaleTimeString();
+
+  // Use JSONP to bypass CORS — Google Apps Script supports this via callback param
+  const cbName = 'nanu_cb_' + Date.now();
+  const script  = document.createElement('script');
+  const timeout = setTimeout(() => {
+    lbl.textContent = 'Could not reach Web App — check URL in setup guide';
+    document.getElementById('syncDot').className = 'sync-dot waiting';
+    document.body.removeChild(script);
+    delete window[cbName];
+  }, 10000);
+
+  window[cbName] = function(rows) {
+    clearTimeout(timeout);
+    document.body.removeChild(script);
+    delete window[cbName];
+
+    if (!Array.isArray(rows) || !rows.length) {
+      lbl.textContent = 'Connected — no properties yet. Waiting for OfferGun price drop emails.';
       document.getElementById('syncDot').className = 'sync-dot live';
-      render();
-    })
-    .catch(() => {
-      lbl.textContent = 'Could not reach Web App — check URL in setup guide';
-      document.getElementById('syncDot').className = 'sync-dot waiting';
+      return;
+    }
+
+    rows.forEach(row => {
+      const exists = deals.find(d => d.addr && d.addr.toLowerCase() === row.addr.toLowerCase());
+      if (!exists) {
+        deals.push({
+          addr       : row.addr,
+          drop       : -(row.dropPct || 0),
+          current    : row.current,
+          offer      : row.offer,
+          original   : row.offer > 0 ? Math.round(row.current / (1-(row.dropPct||0)/100)) : row.current,
+          agent      : row.agent,
+          reductions : row.reductions || 1,
+          firstSeen  : row.firstSeen,
+          mid        : row.addr,
+          ts         : row.firstSeen ? new Date(row.firstSeen).getTime() : Date.now()
+        });
+      } else {
+        exists.drop       = -(row.dropPct || 0);
+        exists.current    = row.current;
+        exists.reductions = row.reductions || exists.reductions;
+      }
     });
+    persist();
+    lbl.textContent = 'Last synced: ' + new Date().toLocaleTimeString() + ' — ' + rows.length + ' properties loaded';
+    document.getElementById('syncDot').className = 'sync-dot live';
+    render();
+  };
+
+  script.src = url + '?callback=' + cbName;
+  document.body.appendChild(script);
 }
 
 function renderTable(){
