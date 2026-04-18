@@ -299,6 +299,21 @@ td.mono{font-family:var(--mono);font-size:12px}
       </div>
     </div>
 
+    <!-- SEARCH BAR -->
+    <div style="margin-bottom:12px;position:relative">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);pointer-events:none">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input
+        id="hotSearch"
+        class="form-input"
+        placeholder="Search address, zip, agent..."
+        oninput="applySearch()"
+        style="padding-left:34px;background:var(--white);border-color:var(--border2);font-size:13px;"
+      >
+      <button id="clearSearch" onclick="clearHotSearch()" style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;line-height:1">×</button>
+    </div>
+
     <!-- TABLE -->
     <div class="card" id="tableCard">
       <div id="tableWrap"></div>
@@ -459,6 +474,7 @@ const SHEETS_KEY   = 'nanu_sheets_v5';
 const WEBAPP_KEY   = 'nanu_webapp_v1';
 let deals = [];
 let currentTier = 'all';
+let searchQuery = '';
 
 function persist() { localStorage.setItem(DEALS_KEY, JSON.stringify(deals)); }
 function hydrate() {
@@ -687,15 +703,53 @@ function fetchWebApp() {
   document.body.appendChild(script);
 }
 
+function applySearch(){
+  const val = document.getElementById('hotSearch').value.trim().toLowerCase();
+  searchQuery = val;
+  const clearBtn = document.getElementById('clearSearch');
+  if (clearBtn) clearBtn.style.display = val ? 'block' : 'none';
+  renderTable();
+}
+
+function clearHotSearch(){
+  document.getElementById('hotSearch').value = '';
+  searchQuery = '';
+  document.getElementById('clearSearch').style.display = 'none';
+  renderTable();
+}
+
 function renderTable(){
   const wrap=document.getElementById('tableWrap');
   let list=[...deals];
   if(currentTier!=='all') list=list.filter(d=>tier(d.drop)===currentTier);
 
+  // Apply search filter
+  if(searchQuery){
+    list=list.filter(d=>{
+      const haystack = [
+        d.addr||'',
+        d.agent||'',
+        // Extract zip from address
+        (d.addr||'').replace(/.*?(\d{5})\s*$/,'$1')
+      ].join(' ').toLowerCase();
+      return haystack.includes(searchQuery);
+    });
+  }
+
   // Sort by composite score descending — highest priority first
   list.sort((a,b) => compositeScore(b) - compositeScore(a));
 
   if(!list.length){
+    // Search empty state
+    if(searchQuery){
+      wrap.innerHTML=`<div class="empty">
+        <div class="empty-glyph">◇</div>
+        <div class="empty-title">No results for "${searchQuery}"</div>
+        <div class="empty-sub">Try searching by street name, zip code, or agent name.</div>
+        <button class="btn btn-ghost" onclick="clearHotSearch()" style="margin-top:8px">Clear search</button>
+      </div>`;
+      return;
+    }
     const msgs={
       all:['No properties on the hot sheet yet','OfferGun price drop emails will appear here automatically once the Google Apps Script is running. Expand the setup guide below to get started.'],
       hot:['No hot properties right now','Properties with a single-email drop of 10% or more will appear here.'],
