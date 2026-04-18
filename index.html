@@ -1041,10 +1041,167 @@ function parseCSV(csv){
   document.getElementById('weeklyBody').innerHTML = tbody ||
     '<tr><td colspan="6" style="text-align:center;padding:24px;font-size:12px;color:var(--text3);font-family:var(--mono)">No rows found — check your sheet URL</td></tr>';
 
+  // Save globally and render current period
+  _byDate = byDate;
+  renderPeriodReport(_currentPeriod, byDate, todayKey);
+
   // Build streak data from last 5 weekdays
   const weekdays = sorted.filter(k => { const d=new Date(k+'T12:00:00'); return d.getDay()>=1&&d.getDay()<=5; }).slice(0,5).reverse();
-  const data = { jp: weekdays.map(k=>byDate[k].jp), jb: weekdays.map(k=>byDate[k].jb), go: weekdays.map(k=>byDate[k].go) };
-  renderStreaks(data);
+  const streakData = { jp: weekdays.map(k=>byDate[k].jp), jb: weekdays.map(k=>byDate[k].jb), go: weekdays.map(k=>byDate[k].go) };
+  renderStreaks(streakData);
+}
+
+// ── PERIOD REPORT RENDERER ───────────────────────────────────────────────────
+function renderPeriodReport(period, byDate, todayKey) {
+  const sorted = Object.keys(byDate).sort().reverse();
+  const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+  if (period === 'daily') {
+    // Last 7 days — individual day rows
+    const recent = sorted.slice(0,7).reverse();
+    let tbody = '';
+    recent.forEach(key => {
+      const d = byDate[key];
+      const dn = dayNames[new Date(key+'T12:00:00').getDay()] || key;
+      const displayDate = d.date || key;
+      const jOkRow = d.jp>=25&&d.jb>=25, gOkRow = d.go>=20;
+      const isToday = key === todayKey;
+      const rowStyle = isToday ? 'background:#0a2018;' : '';
+      const st = (jOkRow&&gOkRow)
+        ? '<span style="font-size:10px;font-family:var(--mono);color:var(--green);font-weight:500">on track ✓</span>'
+        : '<span style="font-size:10px;font-family:var(--mono);color:var(--amber)">check in</span>';
+      tbody += `<tr style="${rowStyle}">
+        <td style="font-size:12px;font-family:var(--mono);color:var(--text2)">${dn} ${displayDate}${isToday?' <span style="font-size:9px;background:var(--green-bg);color:var(--green);border-radius:3px;padding:1px 4px;font-family:var(--mono)">today</span>':''}</td>
+        <td style="color:${d.jp>=25?'var(--green)':'var(--text2)'}">${d.jp}/25</td>
+        <td style="color:${d.jb>=25?'var(--green)':'var(--text2)'}">${d.jb}/25</td>
+        <td style="color:${d.go>=20?'var(--green)':'var(--text2)'}">${d.go}/20</td>
+        <td style="color:${d.go>=20?'var(--green)':'var(--text2)'}">${d.go>0?Math.round((d.go/20)*100)+'%':'—'}</td>
+        <td>${st}</td>
+      </tr>`;
+    });
+    document.getElementById('weeklyBody').innerHTML = tbody ||
+      '<tr><td colspan="6" style="text-align:center;padding:24px;font-size:12px;color:var(--text3);font-family:var(--mono)">No data yet</td></tr>';
+    document.querySelector('.report-title').textContent = 'Daily report';
+    document.querySelector('.report-sub').textContent = 'Last 7 days';
+
+  } else if (period === 'weekly') {
+    // Group by ISO week (Mon–Sun)
+    const byWeek = {};
+    sorted.forEach(key => {
+      const d = new Date(key+'T12:00:00');
+      const dow = d.getDay() === 0 ? 6 : d.getDay() - 1; // Mon=0, Sun=6
+      const mon = new Date(d); mon.setDate(d.getDate() - dow);
+      const weekKey = mon.getFullYear()+'-'+String(mon.getMonth()+1).padStart(2,'0')+'-'+String(mon.getDate()).padStart(2,'0');
+      if (!byWeek[weekKey]) byWeek[weekKey] = {jp:0,jb:0,go:0,days:0,weekStart:weekKey};
+      byWeek[weekKey].jp += byDate[key].jp;
+      byWeek[weekKey].jb += byDate[key].jb;
+      byWeek[weekKey].go += byDate[key].go;
+      byWeek[weekKey].days += 1;
+    });
+
+    const weeks = Object.keys(byWeek).sort().reverse().slice(0,8).reverse();
+    // Targets: 5 days × 25 props, 5 days × 25 buyers, 5 days × 20 offers
+    const jpTarget=125, jbTarget=125, goTarget=100;
+    let tbody = '';
+    weeks.forEach(wk => {
+      const w = byWeek[wk];
+      const wkEnd = new Date(wk+'T12:00:00'); wkEnd.setDate(wkEnd.getDate()+6);
+      const wkEndStr = (wkEnd.getMonth()+1)+'/'+wkEnd.getDate();
+      const wkStartStr = (new Date(wk+'T12:00:00').getMonth()+1)+'/'+(new Date(wk+'T12:00:00').getDate());
+      const label = wkStartStr+' – '+wkEndStr;
+      const jpPct = Math.round((w.jp/jpTarget)*100);
+      const jbPct = Math.round((w.jb/jbTarget)*100);
+      const goPct = Math.round((w.go/goTarget)*100);
+      const jOk = w.jp>=jpTarget&&w.jb>=jbTarget, gOk = w.go>=goTarget;
+      const st = (jOk&&gOk)
+        ? '<span style="font-size:10px;font-family:var(--mono);color:var(--green);font-weight:500">hit targets ✓</span>'
+        : '<span style="font-size:10px;font-family:var(--mono);color:var(--amber)">missed targets</span>';
+      tbody += `<tr>
+        <td style="font-size:12px;font-family:var(--mono);color:var(--text2)">${label}</td>
+        <td style="color:${w.jp>=jpTarget?'var(--green)':'var(--text2)'}">
+          ${w.jp}<span style="color:var(--text3);font-size:10px"> / ${jpTarget} (${jpPct}%)</span>
+        </td>
+        <td style="color:${w.jb>=jbTarget?'var(--green)':'var(--text2)'}">
+          ${w.jb}<span style="color:var(--text3);font-size:10px"> / ${jbTarget} (${jbPct}%)</span>
+        </td>
+        <td style="color:${w.go>=goTarget?'var(--green)':'var(--text2)'}">
+          ${w.go}<span style="color:var(--text3);font-size:10px"> / ${goTarget} (${goPct}%)</span>
+        </td>
+        <td style="color:${w.go>=goTarget?'var(--green)':'var(--text2)'}">
+          ${w.go>0?Math.round((w.go/goTarget)*100)+'%':'—'}
+        </td>
+        <td>${st}</td>
+      </tr>`;
+    });
+    document.getElementById('weeklyBody').innerHTML = tbody ||
+      '<tr><td colspan="6" style="text-align:center;padding:24px;font-size:12px;color:var(--text3);font-family:var(--mono)">No weekly data yet</td></tr>';
+    document.querySelector('.report-title').textContent = 'Weekly report';
+    document.querySelector('.report-sub').textContent = 'Week-by-week volume · targets: 125 props / 125 buyers / 100 offers';
+
+  } else if (period === 'monthly') {
+    // Group by YYYY-MM
+    const byMonth = {};
+    sorted.forEach(key => {
+      const monthKey = key.slice(0,7); // YYYY-MM
+      if (!byMonth[monthKey]) byMonth[monthKey] = {jp:0,jb:0,go:0,days:0};
+      byMonth[monthKey].jp += byDate[key].jp;
+      byMonth[monthKey].jb += byDate[key].jb;
+      byMonth[monthKey].go += byDate[key].go;
+      byMonth[monthKey].days += 1;
+    });
+
+    const months = Object.keys(byMonth).sort().reverse().slice(0,6).reverse();
+    const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    // Monthly targets: ~22 working days
+    const jpTarget=550, jbTarget=550, goTarget=440;
+    let tbody = '';
+    months.forEach(mk => {
+      const m = byMonth[mk];
+      const [yr, mo] = mk.split('-');
+      const label = monthNames[parseInt(mo)-1]+' '+yr;
+      const jpPct = Math.round((m.jp/jpTarget)*100);
+      const jbPct = Math.round((m.jb/jbTarget)*100);
+      const goPct = Math.round((m.go/goTarget)*100);
+      const jOk = m.jp>=jpTarget&&m.jb>=jbTarget, gOk = m.go>=goTarget;
+
+      // Mini bar helper
+      const bar = (val, max, color) => {
+        const w = Math.min(100, Math.round((val/max)*100));
+        return `<div style="width:80px;height:4px;background:var(--border);border-radius:2px;display:inline-block;vertical-align:middle;margin-left:6px"><div style="width:${w}%;height:100%;background:${color};border-radius:2px"></div></div>`;
+      };
+
+      const st = (jOk&&gOk)
+        ? '<span style="font-size:10px;font-family:var(--mono);color:var(--green);font-weight:500">✓ targets hit</span>'
+        : '<span style="font-size:10px;font-family:var(--mono);color:var(--amber)">${jpPct < 80 || jbPct < 80 || goPct < 80 ? "⚠ below 80%" : "close"}</span>';
+
+      tbody += `<tr>
+        <td style="font-size:13px;font-weight:600;color:var(--text)">${label}</td>
+        <td>
+          <span style="color:${m.jp>=jpTarget?'var(--green)':'var(--text2)';font-family:var(--mono)">${m.jp}</span>
+          <span style="color:var(--text3);font-size:10px;font-family:var(--mono)"> / ${jpTarget}</span>
+          ${bar(m.jp, jpTarget, 'var(--blue)')}
+        </td>
+        <td>
+          <span style="color:${m.jb>=jbTarget?'var(--green)':'var(--text2)'};font-family:var(--mono)">${m.jb}</span>
+          <span style="color:var(--text3);font-size:10px;font-family:var(--mono)"> / ${jbTarget}</span>
+          ${bar(m.jb, jbTarget, 'var(--blue)')}
+        </td>
+        <td>
+          <span style="color:${m.go>=goTarget?'var(--green)':'var(--text2)'};font-family:var(--mono)">${m.go}</span>
+          <span style="color:var(--text3);font-size:10px;font-family:var(--mono)"> / ${goTarget}</span>
+          ${bar(m.go, goTarget, 'var(--green)')}
+        </td>
+        <td style="color:${m.go>=goTarget?'var(--green)':'var(--text2)'};font-family:var(--mono)">
+          ${m.go>0?Math.round((m.go/goTarget)*100)+'%':'—'}
+        </td>
+        <td>${(jOk&&gOk)?'<span style="font-size:10px;font-family:var(--mono);color:var(--green);font-weight:500">✓ targets hit</span>':'<span style="font-size:10px;font-family:var(--mono);color:var(--amber)">'+(jpPct<80||jbPct<80||goPct<80?'⚠ below 80%':'close')+'</span>'}</td>
+      </tr>`;
+    });
+    document.getElementById('weeklyBody').innerHTML = tbody ||
+      '<tr><td colspan="6" style="text-align:center;padding:24px;font-size:12px;color:var(--text3);font-family:var(--mono)">No monthly data yet</td></tr>';
+    document.querySelector('.report-title').textContent = 'Monthly report';
+    document.querySelector('.report-sub').textContent = 'Month-by-month volume · targets: 550 props / 550 buyers / 440 offers';
+  }
 }
 function renderStreaks(data){
   const labels=['Joely · properties','Joely · buyers','Grace · offers'];
@@ -1075,6 +1232,12 @@ function exportCSV(){
 function setPeriod(p,btn){
   document.querySelectorAll('.p-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
+  _currentPeriod = p;
+  if(Object.keys(_byDate).length) {
+    const _now = new Date();
+    const todayKey = _now.getFullYear()+'-'+String(_now.getMonth()+1).padStart(2,'0')+'-'+String(_now.getDate()).padStart(2,'0');
+    renderPeriodReport(p, _byDate, todayKey);
+  }
 }
 
 /* ── WEB APP SETUP ── */
