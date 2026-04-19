@@ -955,6 +955,9 @@ function doRefresh(){
     .then(csv=>{btn.innerHTML='↻ Sync';lbl.textContent='Last synced: '+new Date().toLocaleTimeString();parseCSV(csv);})
     .catch(()=>{btn.innerHTML='↻ Sync';lbl.textContent='Could not reach Google Sheets — check URL.';});
 }
+let _byDate = {};
+let _currentPeriod = 'daily';
+
 function parseCSV(csv){
   const lines = csv.trim().split('\n').slice(1).filter(Boolean);
 
@@ -1170,14 +1173,10 @@ function renderPeriodReport(period, byDate, todayKey) {
         return `<div style="width:80px;height:4px;background:var(--border);border-radius:2px;display:inline-block;vertical-align:middle;margin-left:6px"><div style="width:${w}%;height:100%;background:${color};border-radius:2px"></div></div>`;
       };
 
-      const st = (jOk&&gOk)
-        ? '<span style="font-size:10px;font-family:var(--mono);color:var(--green);font-weight:500">✓ targets hit</span>'
-        : '<span style="font-size:10px;font-family:var(--mono);color:var(--amber)">${jpPct < 80 || jbPct < 80 || goPct < 80 ? "⚠ below 80%" : "close"}</span>';
-
       tbody += `<tr>
         <td style="font-size:13px;font-weight:600;color:var(--text)">${label}</td>
         <td>
-          <span style="color:${m.jp>=jpTarget?'var(--green)':'var(--text2)';font-family:var(--mono)">${m.jp}</span>
+          <span style="color:${m.jp>=jpTarget?'var(--green)':'var(--text2)'};font-family:var(--mono)">${m.jp}</span>
           <span style="color:var(--text3);font-size:10px;font-family:var(--mono)"> / ${jpTarget}</span>
           ${bar(m.jp, jpTarget, 'var(--blue)')}
         </td>
