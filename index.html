@@ -475,6 +475,8 @@ const WEBAPP_KEY   = 'nanu_webapp_v1';
 let deals = [];
 let currentTier = 'all';
 let searchQuery = '';
+let sortCol = 'score';   // default sort
+let sortDir = 'desc';    // desc = highest first
 
 function persist() { localStorage.setItem(DEALS_KEY, JSON.stringify(deals)); }
 function hydrate() {
@@ -698,6 +700,28 @@ function fetchWebApp() {
   document.body.appendChild(script);
 }
 
+function setSort(col) {
+  if (sortCol === col) {
+    sortDir = sortDir === 'desc' ? 'asc' : 'desc';
+  } else {
+    sortCol = col;
+    sortDir = col === 'date' ? 'desc' : 'desc'; // newest first for date, highest first for others
+  }
+  renderTable();
+}
+
+function getSortValue(d, col) {
+  switch(col) {
+    case 'score':  return compositeScore(d);
+    case 'drop':   return Math.abs(d.drop || 0);
+    case 'gap':    return d.offer && d.current ? -(d.current - d.offer) : -999999; // negate so below offer = high
+    case 'date':   return d.ts || 0;
+    case 'price':  return d.current || 0;
+    case 'reductions': return d.reductions || 1;
+    default:       return compositeScore(d);
+  }
+}
+
 function applySearch(){
   const val = document.getElementById('hotSearch').value.trim().toLowerCase();
   searchQuery = val;
@@ -711,6 +735,15 @@ function clearHotSearch(){
   searchQuery = '';
   document.getElementById('clearSearch').style.display = 'none';
   renderTable();
+}
+
+function thSort(col, label) {
+  const active = sortCol === col;
+  const arrow = active ? (sortDir === 'desc' ? ' ↓' : ' ↑') : '';
+  const style = active
+    ? 'cursor:pointer;color:var(--text);background:var(--border)'
+    : 'cursor:pointer';
+  return `<th style="${style}" onclick="setSort('${col}')">${label}${arrow}</th>`;
 }
 
 function renderTable(){
@@ -731,8 +764,12 @@ function renderTable(){
     });
   }
 
-  // Sort by composite score descending — highest priority first
-  list.sort((a,b) => compositeScore(b) - compositeScore(a));
+  // Sort by selected column
+  list.sort((a,b) => {
+    const va = getSortValue(a, sortCol);
+    const vb = getSortValue(b, sortCol);
+    return sortDir === 'desc' ? vb - va : va - vb;
+  });
 
   if(!list.length){
     // Search empty state
@@ -780,6 +817,8 @@ function renderTable(){
       :'—';
     const age=Math.floor((Date.now()-d.ts)/(1000*60*60*24));
     const ageStr=age===0?'today':age===1?'1d ago':age+'d ago';
+    const isNew = (Date.now() - (d.ts||0)) < 24*60*60*1000;
+    const newBadge = isNew ? '<span style="font-size:9px;font-weight:700;font-family:var(--mono);background:#1a3a1a;color:var(--green);border:1px solid var(--green-bd);border-radius:3px;padding:1px 5px;margin-left:6px;vertical-align:middle">NEW</span>' : '';
     const score = compositeScore(d);
     const scoreColor = score>=70?'var(--red)':score>=50?'var(--amber)':'var(--text3)';
     const redStr = d.reductions > 1 ? d.reductions+'×' : '1×';
@@ -790,7 +829,7 @@ function renderTable(){
           <span style="font-family:var(--mono);font-size:10px;font-weight:600;color:${scoreColor}">${score}</span>
         </div>
       </td>
-      <td class="addr">${d.addr}</td>
+      <td class="addr">${d.addr}${newBadge}</td>
       <td class="mono">${fmt(d.offer)}</td>
       <td class="mono">${fmt(d.current)}</td>
       <td><span class="delta ${dc}">${ds}</span></td>
@@ -808,8 +847,16 @@ function renderTable(){
 
   wrap.innerHTML=`<div class="tbl-wrap"><table>
     <thead><tr>
-      <th>Score</th><th>Address</th><th>Our offer</th>
-      <th>Current price</th><th>Drop</th><th>Gap to offer</th><th>Drops</th><th>Agent</th><th>Received</th><th></th>
+      ${thSort('score','Score')}
+      <th style="cursor:default">Address</th>
+      <th style="cursor:default">Our offer</th>
+      ${thSort('price','Current price')}
+      ${thSort('drop','Drop')}
+      ${thSort('gap','Gap to offer')}
+      ${thSort('reductions','Drops')}
+      <th style="cursor:default">Agent</th>
+      ${thSort('date','Received')}
+      <th></th>
     </tr></thead>
     <tbody>${rows}</tbody>
   </table></div>`;
@@ -1287,3 +1334,4 @@ init();
 </script>
 </body>
 </html>
+
