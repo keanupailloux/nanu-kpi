@@ -103,6 +103,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 table{width:100%;border-collapse:collapse}
 thead th{font-size:10px;font-weight:600;font-family:var(--mono);color:var(--text3);text-align:left;padding:10px 16px;border-bottom:1px solid var(--border);background:#1e1e1e;white-space:nowrap;letter-spacing:.04em;text-transform:uppercase}
 tbody tr{border-bottom:1px solid var(--border);transition:background .08s}
+tbody tr.gap-below{background:#2a1e00!important;border-left:3px solid var(--amber)}
+tbody tr.gap-close{background:#221800!important;border-left:3px solid #a06000}
+tbody tr.gap-near{background:#1a1600!important;border-left:2px solid #5a4800}
+tbody tr.gap-below:hover{background:#332400!important}
+tbody tr.gap-close:hover{background:#2a1e00!important}
+tbody tr.gap-near:hover{background:#1e1a00!important}
 tbody tr:last-child{border-bottom:none}
 tbody tr:hover{background:#2a2a2a}
 tbody td{padding:13px 16px;font-size:13px;color:var(--text2);vertical-align:middle;line-height:1.4}
@@ -819,17 +825,34 @@ function renderTable(){
     const ageStr=age===0?'today':age===1?'1d ago':age+'d ago';
     const isNew = (Date.now() - (d.ts||0)) < 24*60*60*1000;
     const newBadge = isNew ? '<span style="font-size:9px;font-weight:700;font-family:var(--mono);background:#1a3a1a;color:var(--green);border:1px solid var(--green-bd);border-radius:3px;padding:1px 5px;margin-left:6px;vertical-align:middle">NEW</span>' : '';
+
+    // Gap highlight tier — based on proximity of current price to offer
+    let gapRowClass = '';
+    let gapAlertBadge = '';
+    if (d.offer && d.current) {
+      const gapAmt = d.current - d.offer;
+      if (gapAmt <= 0) {
+        gapRowClass = 'gap-below';
+        gapAlertBadge = '<span style="font-size:9px;font-weight:700;font-family:var(--mono);background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd);border-radius:3px;padding:1px 6px;margin-left:6px;vertical-align:middle">BELOW OFFER</span>';
+      } else if (gapAmt <= 25000) {
+        gapRowClass = 'gap-close';
+        gapAlertBadge = '<span style="font-size:9px;font-weight:700;font-family:var(--mono);background:#2a1e00;color:#f59e0b;border:1px solid #a06000;border-radius:3px;padding:1px 6px;margin-left:6px;vertical-align:middle">WITHIN $25K</span>';
+      } else if (gapAmt <= 50000) {
+        gapRowClass = 'gap-near';
+        gapAlertBadge = '<span style="font-size:9px;font-weight:700;font-family:var(--mono);background:#1a1600;color:#8a7000;border:1px solid #5a4800;border-radius:3px;padding:1px 6px;margin-left:6px;vertical-align:middle">WITHIN $50K</span>';
+      }
+    }
     const score = compositeScore(d);
     const scoreColor = score>=70?'var(--red)':score>=50?'var(--amber)':'var(--text3)';
     const redStr = d.reductions > 1 ? d.reductions+'×' : '1×';
-    return `<tr>
+    return `<tr class="${gapRowClass}">
       <td>
         <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start">
           <span class="tp ${pc}">${pl}</span>
           <span style="font-family:var(--mono);font-size:10px;font-weight:600;color:${scoreColor}">${score}</span>
         </div>
       </td>
-      <td class="addr">${d.addr}${newBadge}</td>
+      <td class="addr">${d.addr}${newBadge}${gapAlertBadge}</td>
       <td class="mono">${fmt(d.offer)}</td>
       <td class="mono">${fmt(d.current)}</td>
       <td><span class="delta ${dc}">${ds}</span></td>
@@ -1334,4 +1357,3 @@ init();
 </script>
 </body>
 </html>
-
