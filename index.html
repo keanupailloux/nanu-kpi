@@ -566,46 +566,7 @@ function pruneOld() {
   if (deals.length !== before) persist();
 }
 
-/* ── INBOUND WEBHOOK ──
-   The Google Apps Script posts JSON to this page's URL with ?nanu_push=1
-   We read it from sessionStorage written by a URL param handler below.
-   Architecture: script posts to   https://your-site.com/?nanu_push=1&addr=...&drop=...&current=...&offer=...
-   This page on load checks for those params and ingests the deal.
-── */
-function checkUrlParams() {
-  const p = new URLSearchParams(window.location.search);
-  if (!p.get('nanu_push')) return;
-  const addr    = p.get('addr')    || '';
-  const drop    = parseFloat(p.get('drop'))    || 0;
-  const current = parseFloat(p.get('current')) || 0;
-  const offer   = parseFloat(p.get('offer'))   || 0;
-  const agent   = p.get('agent')   || '';
-  const msgId   = p.get('mid')     || '';
-
-  if (!addr || !current) return;
-
-  // Deduplicate by message ID
-  if (msgId && deals.find(d=>d.mid===msgId)) {
-    window.history.replaceState({}, '', window.location.pathname);
-    return;
-  }
-
-  // Derive original from drop% and current price
-  const original = drop > 0 ? Math.round(current / (1 - drop/100)) : current;
-
-  deals.push({ addr, original, offer, current, drop: -drop, agent, mid: msgId, ts: Date.now() });
-  persist();
-
-  // Update sync indicator
-  document.getElementById('syncDot').className = 'sync-dot live';
-  document.getElementById('syncText').textContent = 'New property received from OfferGun — ' + addr.split(',')[0];
-  document.getElementById('syncTime').style.display = 'block';
-  document.getElementById('syncTime').textContent = new Date().toLocaleTimeString();
-
-  // Clean URL
-  window.history.replaceState({}, '', window.location.pathname);
-  render();
-}
+/* URL param push removed — Web App is now source of truth */
 
 /* ── UTILS ── */
 function $m(s){ return parseFloat(String(s||'').replace(/[$,\s]/g,''))||0; }
@@ -638,7 +599,6 @@ function setTier(t){
 
 /* ── RENDER ── */
 function render(){
-  pruneOld();
   const hot   = deals.filter(d=>tier(d.drop)==='hot').length;
   const warm  = deals.filter(d=>tier(d.drop)==='warm').length;
   const watch = deals.filter(d=>tier(d.drop)==='watch').length;
@@ -1018,13 +978,32 @@ function renderTable(){
       </div>`;
       return;
     }
+    // If deals exist but list is empty — filters are hiding everything
+    if (deals.length > 0) {
+      const activeFilters = [filterDrop,filterGap,filterScore,searchQuery].filter(Boolean);
+      const tier24h = todayOnly ? 'last 24 hours active' : '';
+      const hint = activeFilters.length > 0 || tier24h
+        ? 'Your active filters are hiding all properties. Try clearing filters or turning off Last 24 hours.'
+        : currentTier !== 'all'
+        ? 'No ' + currentTier + ' properties match current filters. Click All to see everything.'
+        : 'All ' + deals.length + ' properties may be marked as Seen. Click the 👁 Seen button to view them.';
+      wrap.innerHTML=`<div class="empty">
+        <div class="empty-glyph">◇</div>
+        <div class="empty-title">No properties visible</div>
+        <div class="empty-sub">${hint}</div>
+        <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px">
+          <button class="btn btn-ghost btn-sm" onclick="filterDrop='';filterGap='';filterScore='';searchQuery='';document.getElementById('hotSearch').value='';['fDrop','fGap','fScore'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});todayOnly=false;const tb=document.getElementById('todayBtn');if(tb){tb.style.background='transparent';tb.style.color='var(--text3)';tb.style.borderColor='var(--border2)';tb.textContent='✦ Last 24 hours';}showSeen=true;const sb=document.getElementById('seenToggleBtn');if(sb){sb.style.background='var(--blue-bg)';sb.style.color='var(--blue)';sb.style.borderColor='var(--blue-bd)';}setTier('all');renderTable();">Reset everything & show all</button>
+        </div>
+      </div>`;
+      return;
+    }
     const msgs={
       all:['No properties on the hot sheet yet','OfferGun price drop emails will appear here automatically once the Google Apps Script is running. Expand the setup guide below to get started.'],
       hot:['No hot properties right now','Properties with a single-email drop of 10% or more will appear here.'],
       warm:['No warm properties','Properties with a 5–9% drop will appear here.'],
       watch:['Nothing to watch','Properties with a drop under 5% will appear here.'],
     };
-    const [title,sub]=msgs[currentTier];
+    const [title,sub]=msgs[currentTier]||msgs['all'];
     wrap.innerHTML=`<div class="empty">
       <div class="empty-glyph">◇</div>
       <div class="empty-title">${title}</div>
@@ -1072,10 +1051,18 @@ function renderTable(){
         gapAlertBadge = '<span style="font-size:9px;font-weight:700;font-family:var(--mono);background:#001208;color:#15803d;border:1px solid #002b10;border-radius:3px;padding:1px 6px;margin-left:6px;vertical-align:middle">WITHIN $50K</span>';
       }
     }
-    const score = compositeScore(d);
-    const scoreColor = score>=70?'var(--red)':score>=50?'var(--amber)':'var(--text3)';
-    const redStr = d.reductions > 1 ? d.reductions+'×' : '1×';
-    const isSeen = seenSet.has(d.mid || d.addr);
+    const score      = dealScore(d);
+    const flag       = dealFlag(d);
+    const scoreColor = score>=80?'#34d399':score>=60?'var(--amber)':score>=40?'var(--text2)':'var(--text3)';
+    const scoreBg    = score>=80?'#002210':score>=60?'#2a1500':'transparent';
+    const scoreBd    = score>=80?'#065f46':score>=60?'#8a4010':'transparent';
+    const flagHtml   = flag === 'PRIME'
+      ? '<span style="font-size:9px;font-weight:700;font-family:var(--mono);background:#002210;color:#34d399;border:1px solid #065f46;border-radius:3px;padding:1px 5px;margin-left:5px">PRIME</span>'
+      : flag === 'TIGHT'
+      ? '<span style="font-size:9px;font-weight:700;font-family:var(--mono);background:#2a1500;color:#fb923c;border:1px solid #8a4010;border-radius:3px;padding:1px 5px;margin-left:5px">TIGHT</span>'
+      : '';
+    const redStr  = d.reductions > 1 ? d.reductions+'×' : '1×';
+    const isSeen  = seenSet.has(d.mid || d.addr);
     const seenStyle = isSeen && showSeen ? 'opacity:0.5;' : '';
     return `<tr class="${gapRowClass}" style="${seenStyle}" data-mid="${d.mid||d.addr}">
       <td style="padding:11px 8px;width:32px"><input type="checkbox" class="row-cb" onchange="onRowCheck(this)" style="cursor:pointer;accent-color:var(--blue)"></td>
@@ -1094,7 +1081,7 @@ function renderTable(){
       <td style="color:var(--text2);font-size:13px">${d.agent||'—'}</td>
       <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${ageStr}</td>
       <td style="text-align:right">
-        <button onclick="removeDeal(${deals.indexOf(d)})"
+        <button onclick="removeDeal('${d.mid||d.addr}')"
           style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:17px;line-height:1;padding:0 4px"
           onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text3)'">×</button>
       </td>
@@ -1119,7 +1106,11 @@ function renderTable(){
   </table></div>`;
 }
 
-function removeDeal(i){ deals.splice(i,1); persist(); render(); }
+function removeDeal(mid){ 
+  deals = deals.filter(d => (d.mid||d.addr) !== mid); 
+  persist(); 
+  render(); 
+}
 function clearAll(){ if(!confirm('Clear all entries?')) return; deals=[]; persist(); render(); }
 
 /* ── SAMPLE DATA ── */
@@ -1316,32 +1307,6 @@ function parseCSV(csv){
   document.getElementById('chipJoely').innerHTML = '<div class="chip-dot"></div>Joely '+(jOk?'✓':'—');
   document.getElementById('chipGrace').className = 'chip '+(gOk?'c-green':'c-amber');
   document.getElementById('chipGrace').innerHTML = '<div class="chip-dot"></div>Grace '+(gOk?'✓':'—');
-
-  // Build weekly report table — last 7 days with data
-  const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  let tbody = '';
-  recent.forEach(key => {
-    const d  = byDate[key];
-    const dn = dayNames[new Date(key+'T12:00:00').getDay()] || key;
-    const displayDate = d.date || key;
-    const jOkRow = d.jp>=25&&d.jb>=25, gOkRow = d.go>=20;
-    const isToday = key === todayKey;
-    const rowStyle = isToday ? 'background:#f0faf4;' : '';
-    const st = (jOkRow&&gOkRow)
-      ? '<span style="font-size:10px;font-family:var(--mono);color:var(--green);font-weight:500">on track ✓</span>'
-      : '<span style="font-size:10px;font-family:var(--mono);color:var(--amber)">check in</span>';
-    tbody += `<tr style="${rowStyle}">
-      <td style="font-size:12px;font-family:var(--mono);color:var(--text2)">${dn} ${displayDate}${isToday?' <span style="font-size:9px;background:var(--green-bg);color:var(--green);border-radius:3px;padding:1px 4px;font-family:var(--mono)">today</span>':''}</td>
-      <td style="color:${d.jp>=25?'var(--green)':'var(--text2)'}">${d.jp}/25</td>
-      <td style="color:${d.jb>=25?'var(--green)':'var(--text2)'}">${d.jb}/25</td>
-      <td style="color:${d.go>=20?'var(--green)':'var(--text2)'}">${d.go}/20</td>
-      <td style="color:${d.go>=20?'var(--green)':'var(--text2)'}">${d.go>0?Math.round((d.go/25)*100)+'%':'—'}</td>
-      <td>${st}</td>
-    </tr>`;
-  });
-
-  document.getElementById('weeklyBody').innerHTML = tbody ||
-    '<tr><td colspan="6" style="text-align:center;padding:24px;font-size:12px;color:var(--text3);font-family:var(--mono)">No rows found — check your sheet URL</td></tr>';
 
   // Save globally and render current period
   _byDate = byDate;
@@ -1563,8 +1528,6 @@ function tick(){
 /* ── INIT ── */
 function init(){
   hydrate();
-  checkUrlParams();
-
   // Grace view — hide VA tab and seen management
   if (IS_GRACE) {
     const vaTab = document.getElementById('vaTab');
