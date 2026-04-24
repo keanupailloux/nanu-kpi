@@ -231,12 +231,12 @@ td.mono{font-family:var(--mono);font-size:12px}
   </div>
 </div>
 
-<div class="nav">
+<div class="nav" id="mainNav">
   <div class="nav-item active" onclick="tab('hot')">
     Hot Sheet
     <span class="nav-badge" id="navBadge" style="display:none">0</span>
   </div>
-  <div class="nav-item" onclick="tab('kpi')">VA Accountability</div>
+  <div class="nav-item" id="vaTab" onclick="tab('kpi')">VA Accountability</div>
 </div>
 
 <div class="page">
@@ -305,7 +305,36 @@ td.mono{font-family:var(--mono);font-size:12px}
       </div>
     </div>
 
-    <!-- SEARCH BAR -->
+    <!-- SEEN TOGGLE + MARK SEEN BAR -->
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+      <button id="seenToggleBtn" onclick="toggleSeenView()"
+        style="padding:5px 12px;border-radius:6px;font-size:11px;font-family:var(--mono);font-weight:600;cursor:pointer;border:1px solid var(--border2);background:var(--white);color:var(--text2);transition:all .1s">
+        👁 Seen (0)
+      </button>
+      <div id="markSeenBar" style="display:none;align-items:center;gap:8px;flex:1">
+        <span style="font-size:11px;font-family:var(--mono);color:var(--text2)" id="selectedCount">0 selected</span>
+        <button onclick="markSelectedSeen()"
+          style="padding:4px 12px;border-radius:6px;font-size:11px;font-family:var(--mono);font-weight:600;cursor:pointer;border:1px solid var(--green-bd);background:var(--green-bg);color:var(--green)">
+          Mark seen ✓
+        </button>
+        <button onclick="clearSelection()"
+          style="padding:4px 10px;border-radius:6px;font-size:11px;font-family:var(--mono);cursor:pointer;border:1px solid var(--border2);background:var(--white);color:var(--text3)">
+          Cancel
+        </button>
+      </div>
+    </div>
+
+    <!-- TODAY TOGGLE + SEARCH BAR -->
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <button id="todayBtn" onclick="toggleTodayOnly()"
+        style="padding:5px 12px;border-radius:6px;font-size:11px;font-family:var(--mono);font-weight:600;cursor:pointer;border:1px solid var(--green-bd);background:var(--green-bg);color:var(--green);white-space:nowrap;transition:all .1s">
+        ✦ Today only
+      </button>
+      <button onclick="toggleTodayOnly()" id="allDaysBtn"
+        style="padding:5px 12px;border-radius:6px;font-size:11px;font-family:var(--mono);font-weight:500;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--text3);white-space:nowrap;display:none;transition:all .1s">
+        Show all 7 days
+      </button>
+    </div>
     <div style="margin-bottom:12px;position:relative">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);pointer-events:none">
         <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
@@ -318,6 +347,35 @@ td.mono{font-family:var(--mono);font-size:12px}
         style="padding-left:34px;background:var(--white);border-color:var(--border2);font-size:13px;"
       >
       <button id="clearSearch" onclick="clearHotSearch()" style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;line-height:1">×</button>
+    </div>
+
+    <!-- STACKED FILTER DROPDOWNS -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center">
+      <select id="fDrop" onchange="applyFilters()" style="padding:5px 10px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid var(--border2);background:var(--white);color:var(--text2);cursor:pointer">
+        <option value="">Drop % — any</option>
+        <option value="3">3%+</option>
+        <option value="5">5%+</option>
+        <option value="8">8%+</option>
+        <option value="10">10%+</option>
+        <option value="15">15%+</option>
+        <option value="20">20%+</option>
+      </select>
+      <select id="fGap" onchange="applyFilters()" style="padding:5px 10px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid var(--border2);background:var(--white);color:var(--text2);cursor:pointer">
+        <option value="">Gap to offer — any</option>
+        <option value="below">Below my offer</option>
+        <option value="25">Within $25k</option>
+        <option value="50">Within $50k</option>
+        <option value="75">Within $75k</option>
+        <option value="100">Within $100k</option>
+      </select>
+      <select id="fScore" onchange="applyFilters()" style="padding:5px 10px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid var(--border2);background:var(--white);color:var(--text2);cursor:pointer">
+        <option value="">Score — any</option>
+        <option value="80">80%+ Call Now</option>
+        <option value="60">60%+ Follow Up</option>
+        <option value="40">40%+ Watch</option>
+      </select>
+      <button id="clearFilters" onclick="clearAllFilters()" style="display:none;padding:5px 10px;border-radius:6px;font-size:11px;font-family:var(--mono);cursor:pointer;border:1px solid var(--red-bd);background:var(--red-bg);color:var(--red)">✕ Clear filters</button>
+      <span id="filterCount" style="font-size:11px;font-family:var(--mono);color:var(--text3)"></span>
     </div>
 
     <!-- TABLE -->
@@ -475,16 +533,25 @@ td.mono{font-family:var(--mono);font-size:12px}
 <script>
 /* ── STORAGE ── */
 const DEALS_KEY  = 'nanu_deals_v6';
+const SEEN_KEY   = 'nanu_seen_v1';
 const SHEETS_DEFAULT = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTTseyrdiHuS0KYj0n9Cf2ge0XIQRJmThn4wYX6475tupOAW3VeyTpyhROzVg3iab3fyMexnccadZ1e/pub?gid=0&single=true&output=csv';
 const SHEETS_KEY   = 'nanu_sheets_v5';
 const WEBAPP_KEY   = 'nanu_webapp_v1';
 let deals = [];
 let currentTier = 'all';
 let searchQuery = '';
+let todayOnly    = true;
+let filterDrop   = '';
+let filterGap    = '';
+let filterScore  = '';
 let sortCol = 'score';   // default sort
-let sortDir = 'desc';    // desc = highest first
+let sortDir   = 'desc';
+let seenSet   = new Set();
+let showSeen  = false;
+const IS_GRACE = new URLSearchParams(window.location.search).get('view') === 'grace';
 
 function persist() { localStorage.setItem(DEALS_KEY, JSON.stringify(deals)); }
+function persistSeen() { localStorage.setItem(SEEN_KEY, JSON.stringify([...seenSet])); }
 function hydrate() {
   // Don't load from localStorage — Web App is source of truth
   // Just load settings
@@ -494,6 +561,7 @@ function hydrate() {
   if (!localStorage.getItem(SHEETS_KEY)) localStorage.setItem(SHEETS_KEY, SHEETS_DEFAULT);
   const wu = localStorage.getItem(WEBAPP_KEY);
   if (wu) document.getElementById('webAppUrl').value = wu;
+  try { seenSet = new Set(JSON.parse(localStorage.getItem(SEEN_KEY)||'[]')); } catch(e){ seenSet=new Set(); }
 }
 function pruneOld() {
   const cut = Date.now() - 7*24*60*60*1000;
@@ -594,63 +662,88 @@ function render(){
   document.getElementById('tc-warm').textContent=warm;
   document.getElementById('tc-watch').textContent=watch;
   document.getElementById('clearBtn').style.display=deals.length?'inline-flex':'none';
+  updateSeenCount();
   document.getElementById('dateLabel').textContent=
     new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
   renderTable();
 }
 
-/* ── COMPOSITE SCORE ──────────────────────────────────────────────
-   Weights (must sum to 100):
-     Gap to offer  40% — within $20k scores high; below offer = max
-     Drop %        30% — single-email drop
-     Reductions    20% — cumulative reduction count
-     Days on mkt   10% — longer sitting = more desperate
+/* ── DEAL SCORE — MULTIPLICATIVE GATE SYSTEM ──────────────────────
+   Three gates applied in order. Failing any gate collapses the score.
+   Score is a % (0-100) representing deal probability.
+
+   Gate 1: Seller Motivation  (base 0-95)  — total drop from original list
+   Gate 2: Buyer Marketability (×0.4-1.3) — assignment fee room
+   Gate 3: Momentum Multiplier (×0.8-1.2) — drop pattern quality
+
+   Hard overrides:
+   PRIME: total drop 20%+ AND within $30k of offer → always surfaces top
+   TIGHT: below offer AND dropped 15%+ total → motivated but buyer psychology risk
 ── */
-function compositeScore(d) {
-  // GAP SCORE (40pts) — how close current price is to offer
-  let gapScore = 0;
-  if (d.offer && d.current) {
-    const gap = d.current - d.offer; // negative = below offer
-    if (gap <= 0)        gapScore = 40;  // below offer — best possible
-    else if (gap <= 10000)  gapScore = 38;
-    else if (gap <= 20000)  gapScore = 32;
-    else if (gap <= 40000)  gapScore = 20;
-    else if (gap <= 75000)  gapScore = 10;
-    else                    gapScore = 2;
+function dealScore(d) {
+  const drop       = Math.abs(d.drop || 0);           // single email drop %
+  const reductions = d.reductions || 1;
+  const offer      = d.offer || 0;
+  const current    = d.current || 0;
+  const original   = d.original || current;
+
+  // Total drop from original list price
+  const totalDropPct = original > 0 ? ((original - current) / original) * 100 : drop;
+
+  // ── GATE 1: Seller Motivation (base score 0-95) ──
+  let base = 0;
+  if      (totalDropPct >= 25) base = 95;
+  else if (totalDropPct >= 20) base = 80;
+  else if (totalDropPct >= 15) base = 65;
+  else if (totalDropPct >= 10) base = 45;
+  else if (totalDropPct >= 7)  base = 30;
+  else if (totalDropPct >= 5)  base = 20;
+  else                          base = 8;
+
+  // ── GATE 2: Buyer Marketability Multiplier ──
+  // Gap = how much current price is ABOVE your offer
+  // Bigger gap = buyers see more discount = easier to assign
+  let buyerMult = 1.0;
+  if (offer > 0 && current > 0) {
+    const gap = current - offer; // positive = above offer, negative = below
+    if      (gap < 0)       buyerMult = 0.4;  // below offer — buyer psychology problem
+    else if (gap < 5000)    buyerMult = 0.6;  // barely covers $5k fee
+    else if (gap < 15000)   buyerMult = 0.85; // covers fee, tight
+    else if (gap < 30000)   buyerMult = 1.0;  // solid room
+    else if (gap < 50000)   buyerMult = 1.15; // good assignment potential
+    else                    buyerMult = 1.3;  // max buyer visibility
   }
 
-  // DROP SCORE (30pts) — single email drop %
-  const drop = Math.abs(d.drop || 0);
-  let dropScore = 0;
-  if      (drop >= 20) dropScore = 30;
-  else if (drop >= 15) dropScore = 26;
-  else if (drop >= 10) dropScore = 20;
-  else if (drop >= 7)  dropScore = 14;
-  else if (drop >= 5)  dropScore = 8;
-  else                 dropScore = Math.round(drop * 1.2);
+  // ── GATE 3: Momentum Multiplier ──
+  // Single large drop = decisive seller
+  // Many small drops = chasing the market
+  let momentumMult = 1.0;
+  if (drop >= 10 && reductions === 1)        momentumMult = 1.2; // decisive
+  else if (reductions >= 3 && drop >= 5)     momentumMult = 1.1; // accelerating
+  else if (reductions >= 5 && drop < 3)      momentumMult = 0.9; // slow chaser
+  else if (reductions === 1 && drop < 5)     momentumMult = 0.8; // testing
 
-  // REDUCTIONS SCORE (20pts) — cumulative count
-  const reds = d.reductions || 1;
-  let redScore = 0;
-  if      (reds >= 8) redScore = 20;
-  else if (reds >= 5) redScore = 16;
-  else if (reds >= 3) redScore = 11;
-  else if (reds >= 2) redScore = 6;
-  else                redScore = 2;
-
-  // DAYS SCORE (10pts) — days since first seen
-  let dayScore = 0;
-  if (d.firstSeen) {
-    const days = Math.floor((Date.now() - new Date(d.firstSeen)) / (1000*60*60*24));
-    if      (days >= 90) dayScore = 10;
-    else if (days >= 60) dayScore = 8;
-    else if (days >= 30) dayScore = 6;
-    else if (days >= 14) dayScore = 4;
-    else                 dayScore = 2;
-  }
-
-  return gapScore + dropScore + redScore + dayScore;
+  const raw = base * buyerMult * momentumMult;
+  return Math.min(99, Math.max(1, Math.round(raw)));
 }
+
+// Hard override flags
+function dealFlag(d) {
+  const drop       = Math.abs(d.drop || 0);
+  const reductions = d.reductions || 1;
+  const offer      = d.offer || 0;
+  const current    = d.current || 0;
+  const original   = d.original || current;
+  const totalDropPct = original > 0 ? ((original - current) / original) * 100 : drop;
+  const gap = current - offer;
+
+  if (totalDropPct >= 20 && gap >= 0 && gap <= 30000) return 'PRIME';
+  if (gap < 0 && totalDropPct >= 15) return 'TIGHT';
+  return null;
+}
+
+// Keep compositeScore as alias for backwards compat
+function compositeScore(d) { return dealScore(d); }
 
 /* ── WEB APP FETCH ── */
 function fetchWebApp() {
@@ -662,15 +755,24 @@ function fetchWebApp() {
   // Use JSONP to bypass CORS — Google Apps Script supports this via callback param
   const cbName = 'nanu_cb_' + Date.now();
   const script  = document.createElement('script');
+  let dotCount  = 0;
+  const loadingInterval = setInterval(() => {
+    dotCount = (dotCount + 1) % 4;
+    lbl.textContent = 'Fetching from OfferGun email database' + '.'.repeat(dotCount);
+  }, 500);
   const timeout = setTimeout(() => {
-    lbl.textContent = 'Could not reach Web App — check URL in setup guide';
+    clearInterval(loadingInterval);
+    lbl.textContent = 'Web App is waking up — retrying in 15 seconds...';
     document.getElementById('syncDot').className = 'sync-dot waiting';
-    document.body.removeChild(script);
+    try { document.body.removeChild(script); } catch(e) {}
     delete window[cbName];
-  }, 10000);
+    // Auto retry after 15 seconds — cold start can take time
+    setTimeout(() => fetchWebApp(), 15000);
+  }, 30000);
 
   window[cbName] = function(rows) {
     clearTimeout(timeout);
+    clearInterval(loadingInterval);
     document.body.removeChild(script);
     delete window[cbName];
 
@@ -695,6 +797,17 @@ function fetchWebApp() {
                  : row.firstSeen  ? new Date(row.firstSeen).getTime()
                  : Date.now()
     }));
+    // Check if any previously seen properties have new drops — unsee them
+    rows.forEach(row => {
+      const key = row.addr;
+      if (seenSet.has(key)) {
+        const existing = deals.find(d => (d.mid||d.addr) === key);
+        if (existing && Math.abs(row.dropPct) > Math.abs(existing.dropPct||0)) {
+          seenSet.delete(key); // new drop — bring it back
+        }
+      }
+    });
+    persistSeen();
     persist();
     lbl.textContent = 'Last synced: ' + new Date().toLocaleTimeString() + ' — ' + rows.length + ' properties loaded';
     document.getElementById('syncDot').className = 'sync-dot live';
@@ -718,7 +831,7 @@ function setSort(col) {
 
 function getSortValue(d, col) {
   switch(col) {
-    case 'score':  return compositeScore(d);
+    case 'score':  return dealScore(d);
     case 'drop':   return Math.abs(d.drop || 0);
     case 'gap':    return d.offer && d.current ? -(d.current - d.offer) : -999999; // negate so below offer = high
     case 'date':   return d.ts || 0;
@@ -726,6 +839,39 @@ function getSortValue(d, col) {
     case 'reductions': return d.reductions || 1;
     default:       return compositeScore(d);
   }
+}
+
+function applyFilters() {
+  filterDrop  = document.getElementById('fDrop').value;
+  filterGap   = document.getElementById('fGap').value;
+  filterScore = document.getElementById('fScore').value;
+  const active = filterDrop || filterGap || filterScore;
+  document.getElementById('clearFilters').style.display = active ? 'inline-flex' : 'none';
+  renderTable();
+}
+
+function clearAllFilters() {
+  filterDrop = filterGap = filterScore = '';
+  document.getElementById('fDrop').value  = '';
+  document.getElementById('fGap').value   = '';
+  document.getElementById('fScore').value = '';
+  document.getElementById('clearFilters').style.display = 'none';
+  document.getElementById('filterCount').textContent = '';
+  renderTable();
+}
+
+function toggleTodayOnly() {
+  todayOnly = !todayOnly;
+  const todayBtn   = document.getElementById('todayBtn');
+  const allDaysBtn = document.getElementById('allDaysBtn');
+  if (todayOnly) {
+    todayBtn.style.display   = 'inline-flex';
+    allDaysBtn.style.display = 'none';
+  } else {
+    todayBtn.style.display   = 'none';
+    allDaysBtn.style.display = 'inline-flex';
+  }
+  renderTable();
 }
 
 function applySearch(){
@@ -743,6 +889,60 @@ function clearHotSearch(){
   renderTable();
 }
 
+/* ── SEEN MANAGEMENT ── */
+function toggleSeenView() {
+  showSeen = !showSeen;
+  const btn = document.getElementById('seenToggleBtn');
+  btn.style.background = showSeen ? 'var(--blue-bg)' : 'var(--white)';
+  btn.style.color = showSeen ? 'var(--blue)' : 'var(--text2)';
+  btn.style.borderColor = showSeen ? 'var(--blue-bd)' : 'var(--border2)';
+  renderTable();
+}
+
+function onRowCheck(cb) {
+  const checked = document.querySelectorAll('.row-cb:checked').length;
+  document.getElementById('markSeenBar').style.display = checked > 0 ? 'flex' : 'none';
+  document.getElementById('selectedCount').textContent = checked + ' selected';
+  document.getElementById('selectAll').indeterminate = checked > 0 && checked < document.querySelectorAll('.row-cb').length;
+}
+
+function toggleSelectAll(cb) {
+  document.querySelectorAll('.row-cb').forEach(r => r.checked = cb.checked);
+  onRowCheck(cb);
+}
+
+function clearSelection() {
+  document.querySelectorAll('.row-cb').forEach(r => r.checked = false);
+  const sa = document.getElementById('selectAll');
+  if (sa) { sa.checked = false; sa.indeterminate = false; }
+  document.getElementById('markSeenBar').style.display = 'none';
+}
+
+function markSelectedSeen() {
+  const checked = document.querySelectorAll('.row-cb:checked');
+  checked.forEach(cb => {
+    const row = cb.closest('tr');
+    const mid = row ? row.getAttribute('data-mid') : null;
+    if (mid) seenSet.add(mid);
+  });
+  persistSeen();
+  updateSeenCount();
+  clearSelection();
+  renderTable();
+}
+
+function updateSeenCount() {
+  const btn = document.getElementById('seenToggleBtn');
+  if (btn) btn.textContent = '\u{1F441} Seen (' + seenSet.size + ')';
+}
+
+function clearAllSeen() {
+  seenSet.clear();
+  persistSeen();
+  updateSeenCount();
+  renderTable();
+}
+
 function thSort(col, label) {
   const active = sortCol === col;
   const arrow = active ? (sortDir === 'desc' ? ' ↓' : ' ↑') : '';
@@ -757,17 +957,48 @@ function renderTable(){
   let list=[...deals];
   if(currentTier!=='all') list=list.filter(d=>tier(d.drop)===currentTier);
 
+  // Today-only filter
+  if (todayOnly) {
+    const todayCutoff = new Date(); todayCutoff.setHours(0,0,0,0);
+    list = list.filter(d => d.ts && new Date(d.ts) >= todayCutoff);
+  }
+
+  // Filter seen properties — hide unless showSeen is true
+  if (!showSeen) {
+    list = list.filter(d => !seenSet.has(d.mid || d.addr));
+  }
+
   // Apply search filter
   if(searchQuery){
     list=list.filter(d=>{
-      const haystack = [
-        d.addr||'',
-        d.agent||'',
-        // Extract zip from address
-        (d.addr||'').replace(/.*?(\d{5})\s*$/,'$1')
-      ].join(' ').toLowerCase();
+      const haystack = [d.addr||'', d.agent||''].join(' ').toLowerCase();
       return haystack.includes(searchQuery);
     });
+  }
+
+  // Stacked filters
+  if (filterDrop) {
+    const minDrop = parseFloat(filterDrop);
+    list = list.filter(d => Math.abs(d.drop||0) >= minDrop);
+  }
+  if (filterGap) {
+    list = list.filter(d => {
+      if (!d.offer || !d.current) return false;
+      const gap = d.current - d.offer;
+      if (filterGap === 'below') return gap < 0;
+      return gap <= parseFloat(filterGap) * 1000;
+    });
+  }
+  if (filterScore) {
+    const minScore = parseFloat(filterScore);
+    list = list.filter(d => dealScore(d) >= minScore);
+  }
+
+  // Update filter count
+  const fcEl = document.getElementById('filterCount');
+  if (fcEl) {
+    const active = [filterDrop,filterGap,filterScore].filter(Boolean).length;
+    fcEl.textContent = active > 0 ? list.length + ' matching' : '';
   }
 
   // Sort by selected column
@@ -845,14 +1076,17 @@ function renderTable(){
     const score = compositeScore(d);
     const scoreColor = score>=70?'var(--red)':score>=50?'var(--amber)':'var(--text3)';
     const redStr = d.reductions > 1 ? d.reductions+'×' : '1×';
-    return `<tr class="${gapRowClass}">
+    const isSeen = seenSet.has(d.mid || d.addr);
+    const seenStyle = isSeen && showSeen ? 'opacity:0.5;' : '';
+    return `<tr class="${gapRowClass}" style="${seenStyle}" data-mid="${d.mid||d.addr}">
+      <td style="padding:11px 8px;width:32px"><input type="checkbox" class="row-cb" onchange="onRowCheck(this)" style="cursor:pointer;accent-color:var(--blue)"></td>
       <td>
         <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start">
           <span class="tp ${pc}">${pl}</span>
-          <span style="font-family:var(--mono);font-size:10px;font-weight:600;color:${scoreColor}">${score}</span>
+          <span style="font-family:var(--mono);font-size:11px;font-weight:700;color:${scoreColor};background:${scoreBg};border:1px solid ${scoreBd};border-radius:4px;padding:1px 6px">${score}%</span>
         </div>
       </td>
-      <td class="addr">${d.addr}${newBadge}${gapAlertBadge}</td>
+      <td class="addr">${d.addr}${newBadge}${flagHtml}${gapAlertBadge}</td>
       <td class="mono">${fmt(d.offer)}</td>
       <td class="mono">${fmt(d.current)}</td>
       <td><span class="delta ${dc}">${ds}</span></td>
@@ -870,6 +1104,7 @@ function renderTable(){
 
   wrap.innerHTML=`<div class="tbl-wrap"><table>
     <thead><tr>
+      <th style="width:32px;padding:9px 8px"><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)" style="cursor:pointer;accent-color:var(--blue)"></th>
       ${thSort('score','Score')}
       <th style="cursor:default">Address</th>
       <th style="cursor:default">Our offer</th>
@@ -1330,6 +1565,14 @@ function tick(){
 function init(){
   hydrate();
   checkUrlParams();
+
+  // Grace view — hide VA tab and seen management
+  if (IS_GRACE) {
+    const vaTab = document.getElementById('vaTab');
+    if (vaTab) vaTab.style.display = 'none';
+    document.title = 'NANU REI — Hot Sheet';
+  }
+
   render();
   renderStreaks({jp:[],jb:[],go:[],gc:[]});
   setTier('all');
