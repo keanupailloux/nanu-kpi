@@ -327,12 +327,8 @@ td.mono{font-family:var(--mono);font-size:12px}
     <!-- TODAY TOGGLE + SEARCH BAR -->
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
       <button id="todayBtn" onclick="toggleTodayOnly()"
-        style="padding:5px 12px;border-radius:6px;font-size:11px;font-family:var(--mono);font-weight:600;cursor:pointer;border:1px solid var(--green-bd);background:var(--green-bg);color:var(--green);white-space:nowrap;transition:all .1s">
+        style="padding:5px 12px;border-radius:6px;font-size:11px;font-family:var(--mono);font-weight:600;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--text3);white-space:nowrap;transition:all .1s">
         ✦ Last 24 hours
-      </button>
-      <button onclick="toggleTodayOnly()" id="allDaysBtn"
-        style="padding:5px 12px;border-radius:6px;font-size:11px;font-family:var(--mono);font-weight:500;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--text3);white-space:nowrap;display:none;transition:all .1s">
-        Show all 7 days
       </button>
     </div>
     <div style="margin-bottom:12px;position:relative">
@@ -540,7 +536,7 @@ const WEBAPP_KEY   = 'nanu_webapp_v1';
 let deals = [];
 let currentTier = 'all';
 let searchQuery = '';
-let todayOnly    = true;
+let todayOnly    = false;
 let filterDrop   = '';
 let filterGap    = '';
 let filterScore  = '';
@@ -862,14 +858,17 @@ function clearAllFilters() {
 
 function toggleTodayOnly() {
   todayOnly = !todayOnly;
-  const todayBtn   = document.getElementById('todayBtn');
-  const allDaysBtn = document.getElementById('allDaysBtn');
+  const btn = document.getElementById('todayBtn');
   if (todayOnly) {
-    todayBtn.style.display   = 'inline-flex';
-    allDaysBtn.style.display = 'none';
+    btn.style.background   = 'var(--green-bg)';
+    btn.style.color        = 'var(--green)';
+    btn.style.borderColor  = 'var(--green-bd)';
+    btn.textContent        = '✦ Last 24 hrs — ON';
   } else {
-    todayBtn.style.display   = 'none';
-    allDaysBtn.style.display = 'inline-flex';
+    btn.style.background   = 'transparent';
+    btn.style.color        = 'var(--text3)';
+    btn.style.borderColor  = 'var(--border2)';
+    btn.textContent        = '✦ Last 24 hours';
   }
   renderTable();
 }
@@ -1600,4 +1599,3 @@ init();
 </script>
 </body>
 </html>
-
