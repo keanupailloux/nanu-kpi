@@ -328,7 +328,7 @@ td.mono{font-family:var(--mono);font-size:12px}
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
       <button id="todayBtn" onclick="toggleTodayOnly()"
         style="padding:5px 12px;border-radius:6px;font-size:11px;font-family:var(--mono);font-weight:600;cursor:pointer;border:1px solid var(--green-bd);background:var(--green-bg);color:var(--green);white-space:nowrap;transition:all .1s">
-        ✦ Today only
+        ✦ Last 24 hours
       </button>
       <button onclick="toggleTodayOnly()" id="allDaysBtn"
         style="padding:5px 12px;border-radius:6px;font-size:11px;font-family:var(--mono);font-weight:500;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--text3);white-space:nowrap;display:none;transition:all .1s">
@@ -957,10 +957,10 @@ function renderTable(){
   let list=[...deals];
   if(currentTier!=='all') list=list.filter(d=>tier(d.drop)===currentTier);
 
-  // Today-only filter
+  // Last 24 hours — rolling window, not midnight reset
   if (todayOnly) {
-    const todayCutoff = new Date(); todayCutoff.setHours(0,0,0,0);
-    list = list.filter(d => d.ts && new Date(d.ts) >= todayCutoff);
+    const cutoff24h = Date.now() - 24 * 60 * 60 * 1000;
+    list = list.filter(d => d.ts && d.ts >= cutoff24h);
   }
 
   // Filter seen properties — hide unless showSeen is true
