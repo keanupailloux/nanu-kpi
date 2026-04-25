@@ -542,12 +542,12 @@ let filterGap    = '';
 let filterScore  = '';
 let sortCol = 'score';   // default sort
 let sortDir   = 'desc';
-let seenSet   = new Set();
+let seenSet   = new Map(); // Map of addr -> dropPctAtTimeOfSeen
 let showSeen  = false;
 const IS_GRACE = new URLSearchParams(window.location.search).get('view') === 'grace';
 
 function persist() { localStorage.setItem(DEALS_KEY, JSON.stringify(deals)); }
-function persistSeen() { localStorage.setItem(SEEN_KEY, JSON.stringify([...seenSet])); }
+function persistSeen() { localStorage.setItem(SEEN_KEY, JSON.stringify([...seenSet.entries()])); }
 function hydrate() {
   // Don't load from localStorage — Web App is source of truth
   // Just load settings
@@ -557,7 +557,13 @@ function hydrate() {
   if (!localStorage.getItem(SHEETS_KEY)) localStorage.setItem(SHEETS_KEY, SHEETS_DEFAULT);
   const wu = localStorage.getItem(WEBAPP_KEY);
   if (wu) document.getElementById('webAppUrl').value = wu;
-  try { seenSet = new Set(JSON.parse(localStorage.getItem(SEEN_KEY)||'[]')); } catch(e){ seenSet=new Set(); }
+  try {
+    const _raw = JSON.parse(localStorage.getItem(SEEN_KEY) || '[]');
+    seenSet = new Map(Array.isArray(_raw) && _raw.length && Array.isArray(_raw[0])
+      ? _raw
+      : _raw.map(addr => [addr, 0])
+    );
+  } catch(e) { seenSet = new Map(); }
 }
 function pruneOld() {
   const cut = Date.now() - 7*24*60*60*1000;
@@ -753,13 +759,24 @@ function fetchWebApp() {
                  : row.firstSeen  ? new Date(row.firstSeen).getTime()
                  : Date.now()
     }));
-    // Check if any previously seen properties have new drops — unsee them
+    // Re-read seenSet from localStorage before any comparison
+    // This ensures seen state is current even if multiple tabs are open
+    try {
+      const _fresh = JSON.parse(localStorage.getItem(SEEN_KEY) || '[]');
+      seenSet = new Map(Array.isArray(_fresh) && _fresh.length && Array.isArray(_fresh[0])
+        ? _fresh
+        : _fresh.map(addr => [addr, 0])
+      );
+    } catch(e) {}
+
+    // Only un-see a property if its drop % has INCREASED since we marked it seen
+    // Compare against the stored dropPct in the Map — not the deals array
     rows.forEach(row => {
       const key = row.addr;
       if (seenSet.has(key)) {
-        const existing = deals.find(d => (d.mid||d.addr) === key);
-        if (existing && Math.abs(row.dropPct) > Math.abs(existing.dropPct||0)) {
-          seenSet.delete(key); // new drop — bring it back
+        const seenAtDrop = seenSet.get(key) || 0;
+        if (Math.abs(row.dropPct) > seenAtDrop) {
+          seenSet.delete(key); // new bigger drop — bring it back to main list
         }
       }
     });
@@ -882,7 +899,11 @@ function markSelectedSeen() {
   checked.forEach(cb => {
     const row = cb.closest('tr');
     const mid = row ? row.getAttribute('data-mid') : null;
-    if (mid) seenSet.add(mid);
+    if (mid) {
+      const deal = deals.find(d => (d.mid||d.addr) === mid);
+      const dropNow = deal ? Math.abs(deal.drop || 0) : 0;
+      seenSet.set(mid, dropNow);
+    }
   });
   persistSeen();
   updateSeenCount();
